@@ -1,0 +1,61 @@
+---
+title: "transcript_abundances"
+author: "Tanvi Ingle"
+date: "8/20/2021"
+output: html_document
+---
+
+## Objective
+
+Here I create a function to plot transcript abundances from phix174 model outputs
+
+### Get libraries
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+```
+
+### General function to plot normalized transcript abundances
+```{r}
+plot_abundances <- function(basedir, filename, timestamp){
+fig <- read_tsv(paste0(basedir, filename)) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity") +
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+
+return(fig)
+}
+
+```
+
+
+### Set directories & Parameters
+```{r}
+basedir = "/Users/t/Documents/Wilke/phix174/output/"
+filename = "phix_sample.csv"
+timestamp = 1200
+
+plot_abundances(basedir, filename, timestamp)
+```
+
+
+
+
+
+
+
+
+
