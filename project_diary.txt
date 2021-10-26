@@ -6,5 +6,5 @@ Resuming project after med school app hiatus. Met with Alexis to touchbase on pr
 10-20-2021
 @check terminator locations
 
-
 10-26-2021
+Continuing work on mini_optimization_pA. Finished get_error() function to calculate RMSE. 
