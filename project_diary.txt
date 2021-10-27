@@ -7,4 +7,5 @@ Resuming project after med school app hiatus. Met with Alexis to touchbase on pr
 @check terminator locations
 
 10-26-2021
-Continuing work on mini_optimization_pA. Finished get_error() function to calculate RMSE. 
+Continuing work on mini_optimization_pA. Finished get_error() function to calculate RMSE. Started work on wrapper() which will implement hill climbing algorithm to optimize pA. 
+@check terminator locations
