@@ -21,6 +21,12 @@ Discussed whether to 1) treat pA,pB,pD as distinct, independent parameters OR 2)
 @Alexis will send an example script of how to use gnu parallel
 
 11-2-2021
+Tried to scale promoter strengths using fold-change relationship. Dead end, resulted in wildly wrong distribution...will try to rerun with different starting points. Created 'weird_pt_errors.py" to find issues with pinetree. Also finally fixed terminator positions. 
 
 
+
+DIRECTORY
+----------------------
+mini_optmization_pA.py : script optimizing 1 promoter (pA)
+weird_pt_errors.py : find error codes with pt
 
