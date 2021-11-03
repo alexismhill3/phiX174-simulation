@@ -9,3 +9,18 @@ Resuming project after med school app hiatus. Met with Alexis to touchbase on pr
 10-26-2021
 Continuing work on mini_optimization_pA. Finished get_error() function to calculate RMSE. Started work on wrapper() which will implement hill climbing algorithm to optimize pA. 
 @check terminator locations
+
+10-29-2021
+Received feedback from Alexis on 'mini_optimization_pA': 
+1) Add doc strings for each function
+2) Add comments for values hardcoded/source
+3) gnu parallel = command line utility, use this to run stuff on pod; Turn this into a python script that takes a command=line variable & use gnu parallel to run it on the pod; Create a text file with param values --> bash script. 
+
+Discussed whether to 1) treat pA,pB,pD as distinct, independent parameters OR 2) whether to assume the relative fold change experimentally recorded across all promoters will inform their relative binding strengths. Will proceed with Option 2. 
+
+@Alexis will send an example script of how to use gnu parallel
+
+11-2-2021
+
+
+
