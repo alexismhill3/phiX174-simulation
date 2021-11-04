@@ -23,6 +23,11 @@ Discussed whether to 1) treat pA,pB,pD as distinct, independent parameters OR 2)
 11-2-2021
 Tried to scale promoter strengths using fold-change relationship. Dead end, resulted in wildly wrong distribution...will try to rerun with different starting points. Created 'weird_pt_errors.py" to find issues with pinetree. Also finally fixed terminator positions. 
 
+11-3-2021
+@Clean up scripts & files, change names 
+    *on run_pt() function, add an argument that allows user to create a folder to store that specific set of runs. Will help keep different trials more organized.
+@Try running mini_optimization_pA.py with scaled promoter values & find different stepping points. 
+
 
 
 DIRECTORY
