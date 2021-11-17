@@ -55,11 +55,12 @@ Spent some time reconsolidating my work to assess where I am in this project.
         
     AIM 3: Capture change in viral fitness after whole codon deoptimization
         a) ^Extract amino acid sequences for each gene from genebank file 
+        b) Play with transcription rates/weights applied to the genes to mimic deoptimized codon usage
         
-
 Goals for today: 
 @Generalize mini_optimize script and preform analysis for each promoter value
 @Add script that plots normalized transcript abundances (ie match Logel 2020 figure)
+@
 
 
 
