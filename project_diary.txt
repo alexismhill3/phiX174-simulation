@@ -29,6 +29,18 @@ Tried to scale promoter strengths using fold-change relationship. Dead end, resu
 @Try running mini_optimization_pA.py with scaled promoter values & find different stepping points. 
 
 
+11-17-2021
+Spent some time reconsolidating my work to assess where I am in this project. * indicates completed.
+    AIM 1: Recapitulate Gene Expression patterns in wildtype PhiX-174
+        a) *Created script to parse genebank file, extract genomic coordinates, and linearize circular genome (parsing_genebank)
+        b) *Created script to run pinetree using linearized genomic coordinates; manually toggled parameter values (phiX174_optimization) 
+        c) *Implement Hill Climbing algorithm to find optimize 1 parameter (mini_optimization)
+        d) 
+        
+    AIM 2: 
+        a)
+        b)
+        c) 
 
 DIRECTORY
 ----------------------
