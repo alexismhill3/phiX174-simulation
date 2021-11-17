@@ -20,6 +20,8 @@ Discussed whether to 1) treat pA,pB,pD as distinct, independent parameters OR 2)
 
 @Alexis will send an example script of how to use gnu parallel
 
+NOVEMBER 2021
+------------
 11-2-2021
 Tried to scale promoter strengths using fold-change relationship. Dead end, resulted in wildly wrong distribution...will try to rerun with different starting points. Created 'weird_pt_errors.py" to find issues with pinetree. Also finally fixed terminator positions. 
 
@@ -35,17 +37,33 @@ Spent some time reconsolidating my work to assess where I am in this project.
 
     AIM 1: Recapitulate Gene Expression patterns in wildtype PhiX-174
         a) *Created script to parse genebank file, extract genomic coordinates, and linearize circular genome (parsing_genebank)
+        
         b) *Created script to run pinetree using linearized genomic coordinates; manually toggled parameter values (phiX174_optimization) 
+        
         c) *Implement Hill Climbing algorithm to optimize 1 parameter (mini_optimization)
+        
         d) ~repeat Hill Climbing to optimize each paramter individually 
+        
         e) ~optimize multiple parameters w/ step idea
         
+        
     AIM 2: Capture change in viral fitness after genomic modularization 
-        a) ^linearize genome & remove overlapping features (Wright 2020) and find change in fitness. 
-        b) ~write script that calculates fitness from transcript levels using stoichiometric relationships (Leuven 2020)
-    
+        a) ~write script that calculates fitness from transcript levels using stoichiometric relationships (Leuven 2020)
+        
+        b) ^linearize genome & remove overlapping features (Wright 2020) and find change in fitness. 
+        
+        
     AIM 3: Capture change in viral fitness after whole codon deoptimization
-        a) ^
+        a) ^Extract amino acid sequences for each gene from genebank file 
+        
+
+Goals for today: 
+@Generalize mini_optimize script and preform analysis for each promoter value
+@Add script that plots normalized transcript abundances (ie match Logel 2020 figure)
+
+
+
+
 
 DIRECTORY
 ----------------------
