@@ -30,17 +30,22 @@ Tried to scale promoter strengths using fold-change relationship. Dead end, resu
 
 
 11-17-2021
-Spent some time reconsolidating my work to assess where I am in this project. * indicates completed.
+Spent some time reconsolidating my work to assess where I am in this project. 
+*completed, ~in progress, ^future
+
     AIM 1: Recapitulate Gene Expression patterns in wildtype PhiX-174
         a) *Created script to parse genebank file, extract genomic coordinates, and linearize circular genome (parsing_genebank)
         b) *Created script to run pinetree using linearized genomic coordinates; manually toggled parameter values (phiX174_optimization) 
-        c) *Implement Hill Climbing algorithm to find optimize 1 parameter (mini_optimization)
-        d) 
+        c) *Implement Hill Climbing algorithm to optimize 1 parameter (mini_optimization)
+        d) ~repeat Hill Climbing to optimize each paramter individually 
+        e) ~optimize multiple parameters w/ step idea
         
-    AIM 2: 
-        a)
-        b)
-        c) 
+    AIM 2: Capture change in viral fitness after genomic modularization 
+        a) ^linearize genome & remove overlapping features (Wright 2020) and find change in fitness. 
+        b) ~write script that calculates fitness from transcript levels using stoichiometric relationships (Leuven 2020)
+    
+    AIM 3: Capture change in viral fitness after whole codon deoptimization
+        a) ^
 
 DIRECTORY
 ----------------------
