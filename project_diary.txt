@@ -59,11 +59,24 @@ Spent some time reconsolidating my work to assess where I am in this project.
 
 Met with Claus and Alexis to review project aims; removing Aim 3 because of challenges modeling tRNA behavior. Focus on Aims 1 & 2. Discussed new optimization strategy using normal distributions for each parameter. See written research notes for details. 
 
+11-25-2021
+Thought through new optimization technique discussed with Claus. Started writing pseudocode in phix174_optmization.py code. Action Items that are next:
 
+    @TODO Write run_pt() function which accept arguments for pA/B/D and oA/B/D
+    @TODO Write calc_error() function
+    @TODO Figure out how to define & Sample from normal distribution
+    @TODO Write error comparison code 
+    @TODO ^Write first for only pA and see if it works
+    @TODO Write function that will plot transcript abundances to match Logel 2020 plot
 
-
-
-
+11-26-2021
+Goals: 
+    @TODO Write run_pt() function which accept arguments for pA/B/D and oA/B/D
+    @TODO Write calc_error() function
+    @TODO Figure out how to define & Sample from normal distribution
+    @TODO Write error comparison code 
+    @TODO ^Write first for only pA and see if it works
+    
 
 
 DIRECTORY
