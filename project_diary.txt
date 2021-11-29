@@ -70,13 +70,10 @@ Thought through new optimization technique discussed with Claus. Started writing
     @TODO Write function that will plot transcript abundances to match Logel 2020 plot
 
 11-26-2021
-Goals: 
-    @TODO Write run_pt() function which accept arguments for pA/B/D and oA/B/D
-    @TODO Write calc_error() function
-    @TODO Figure out how to define & Sample from normal distribution
-    @TODO Write error comparison code 
-    @TODO ^Write first for only pA and see if it works
-    
+Wrote run_pt() function which accept arguments for pA/B/D and oA/B/D. Wrote calc_error() function. Also figured out how to define & Sample from normal distribution defined (arbitrarily?) for each promoter value. Tested this code on 1 promoter value (pA). 
+  
+11-29-2021
+Expanded phix_opt code for three promoter values. Realized that some promoter values will result in an overlap error in the pinetree simulation -- using try/except to catch these values and isolate promoter values that do work. Remain unconvinced by the normal distributions I have specified for each promoter & the step size. Meeting with Alexis tomorrow to touchbase. 
 
 
 DIRECTORY
