@@ -1,5 +1,5 @@
 OCTOBER 2021
-------------
+--------------
 10-19-2021
 Resuming project after med school app hiatus. Met with Alexis to touchbase on project status & next steps. Discussed first optimizing a single parameter value (promoter A strength) instead of all promoters. Created python script 'mini_optimization_pA'. 
 
@@ -21,7 +21,7 @@ Discussed whether to 1) treat pA,pB,pD as distinct, independent parameters OR 2)
 @Alexis will send an example script of how to use gnu parallel
 
 NOVEMBER 2021
-------------
+--------------
 11-2-2021
 Tried to scale promoter strengths using fold-change relationship. Dead end, resulted in wildly wrong distribution...will try to rerun with different starting points. Created 'weird_pt_errors.py" to find issues with pinetree. Also finally fixed terminator positions. 
 
@@ -80,6 +80,21 @@ Met with Alexis to touchbase on optimization algorithm: Feedback includes -
     1) Concerns about 'arbitrary' distribution for promoter strengths --> solution is to have runs with different assumed distributions. @TODO Need to think more about how I will generate these 
     2) Concerns with pinetree errors --> solution is to try reinstalling pinetree directly from the git repository since Alexis likely has solved this overlap error already. 
     
+Also discussed next steps, after finishing optimization code: 
+    1) Move code onto the Wilke Pod. See Alexis's 'gnu parallel' repository to see:
+        a) how to write main script to read arguments in a file
+        b) write text file with parameters & run info
+        c) write bash file to read text file & run main script
+    2) On Pod:
+        a) set up file in the scratch environment for the project & figure out how to push to github
+        b) create project specific conda environment & install relevant packages
+
+
+DECEMBER 2021
+--------------
+12-1-2021
+
+
 
 
 
