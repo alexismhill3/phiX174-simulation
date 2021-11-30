@@ -75,6 +75,13 @@ Wrote run_pt() function which accept arguments for pA/B/D and oA/B/D. Wrote calc
 11-29-2021
 Expanded phix_opt code for three promoter values. Realized that some promoter values will result in an overlap error in the pinetree simulation -- using try/except to catch these values and isolate promoter values that do work. Remain unconvinced by the normal distributions I have specified for each promoter & the step size. Meeting with Alexis tomorrow to touchbase. 
 
+11-30-2021
+Met with Alexis to touchbase on optimization algorithm: Feedback includes -
+    1) Concerns about 'arbitrary' distribution for promoter strengths --> solution is to have runs with different assumed distributions. @TODO Need to think more about how I will generate these 
+    2) Concerns with pinetree errors --> solution is to try reinstalling pinetree directly from the git repository since Alexis likely has solved this overlap error already. 
+    
+
+
 
 DIRECTORY
 ----------------------
