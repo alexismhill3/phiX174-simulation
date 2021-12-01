@@ -86,8 +86,8 @@ Also discussed next steps, after finishing optimization code:
         b) write text file with parameters & run info
         c) write bash file to read text file & run main script
     2) On Pod:
-        a) set up file in the scratch environment for the project & figure out how to push to github
-        b) create project specific conda environment & install relevant packages
+      DONE  a) set up file in the scratch environment for the project & figure out how to push to github
+      DONE  b) create project specific conda environment & install relevant packages
 
 
 DECEMBER 2021
