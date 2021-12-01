@@ -94,6 +94,14 @@ DECEMBER 2021
 --------------
 12-1-2021
 
+Successfully ran Alexis' gnu-parallel-example on the Wilke POD & set up github connection. Goals for today: 
+    DONE @TODO Finish writing optimization code (add try-except clauses)
+        *Not necessary b/c Alexis found issue of overlapping ribosome and gene sequences. 
+    @TODO Create 1) jobs.txt 2) bash script 3) python script 
+    @TODO Create scenarios with 
+        1) different promoter distributions 
+        2) have 10 runs for each promoter distribution
+
 
 
 
