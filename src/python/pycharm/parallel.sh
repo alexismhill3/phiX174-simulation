@@ -1,1 +1,2 @@
-parallel --jobs 1 < jobs.txt
+parallel --jobs 5 < jobs.txt
+
