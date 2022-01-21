@@ -107,7 +107,7 @@ def get_error(file):
         error = mean_squared_error(sim.exp, sim.norm, squared=False)
         return (error)
 
-def main(uA, oA, uB, oB, uD, oD, sim, date, base_dir):
+def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
 
     gen = 0
     pA = np.exp(np.random.normal(uA, oA, 1)[0])
@@ -180,7 +180,7 @@ def main(uA, oA, uB, oB, uD, oD, sim, date, base_dir):
         # STEP 3: Calculate Error
         old_error = new_error
         new_error = get_error(
-            file=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ptrun.tsv")
+            file=base_dir + "output/" + str(date) + "/scenario_" + str(scenario) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ptrun.tsv")
 
         # STEP 4: Compare Old Error to New Error;
         if ((new_error == -1 or new_error >= old_error)):
@@ -235,21 +235,21 @@ def main(uA, oA, uB, oB, uD, oD, sim, date, base_dir):
         no_change = 0
         print(f"\n")
 
-    report_df.to_csv(base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_report.csv")
-
+    report_df.to_csv(base_dir + "output/" + str(date) + "/scenario_" + str(scenario) + "/sim_"  + str(sim) + "_report.csv")
 
 if __name__ == '__main__':
     # Code to read in arguments
     # uA, oA, uB, oB, uD, oD, sim, date, base_dir
-    sim = sys.argv[1]
-    date = sys.argv[2]
-    base_dir = sys.argv[3]
-    uA = sys.argv[4]
-    oA = sys.argv[5]
-    uB = sys.argv[6]
-    oB = sys.argv[7]
-    uD = sys.argv[8]
-    oD = sys.argv[9]
-    main(uA, oA, uB, oB, uD, oD, sim, date, base_dir)
+    scenario = sys.argv[1]
+    sim = sys.argv[2]
+    date = sys.argv[3]
+    base_dir = sys.argv[4]
+    uA = int(sys.argv[5])
+    oA = int(sys.argv[6])
+    uB = int(sys.argv[7])
+    oB = int(sys.argv[8])
+    uD = int(sys.argv[9])
+    oD = int(sys.argv[10])
+    main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir)
     #base_dir = "/Users/tanviingle/Documents/Wilke/phix174/"
 
