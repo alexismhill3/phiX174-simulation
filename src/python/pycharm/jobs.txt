@@ -1,0 +1,1 @@
+python3 phix_174_promoter_opt.py 1 01212022 "/Users/tanviingle/Documents/Wilke/phix174/" 10 8 12 7 12 9

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import pinetree as pt
 from sklearn.metrics import mean_squared_error
+import sys
 
 # STEP 2: run_pt() function runs the pinetree simulation
 def run_pt(gen, pA, pB, pD):
@@ -106,12 +107,7 @@ def get_error(file):
         error = mean_squared_error(sim.exp, sim.norm, squared=False)
         return (error)
 
-
-if __name__ == '__main__':
-    # Code to read in arguments
-    # uA, oA, uB, oB, uD, oD, sim, date, base_dir
-
-    base_dir = "/Users/tanviingle/Documents/Wilke/phix174/"
+def main(uA, oA, uB, oB, uD, oD, sim, date, base_dir):
 
     gen = 0
     pA = np.exp(np.random.normal(uA, oA, 1)[0])
@@ -183,7 +179,8 @@ if __name__ == '__main__':
 
         # STEP 3: Calculate Error
         old_error = new_error
-        new_error = get_error(file=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ptrun.tsv")
+        new_error = get_error(
+            file=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ptrun.tsv")
 
         # STEP 4: Compare Old Error to New Error;
         if ((new_error == -1 or new_error >= old_error)):
@@ -239,3 +236,20 @@ if __name__ == '__main__':
         print(f"\n")
 
     report_df.to_csv(base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_report.csv")
+
+
+if __name__ == '__main__':
+    # Code to read in arguments
+    # uA, oA, uB, oB, uD, oD, sim, date, base_dir
+    sim = sys.argv[1]
+    date = sys.argv[2]
+    base_dir = sys.argv[3]
+    uA = sys.argv[4]
+    oA = sys.argv[5]
+    uB = sys.argv[6]
+    oB = sys.argv[7]
+    uD = sys.argv[8]
+    oD = sys.argv[9]
+    main(uA, oA, uB, oB, uD, oD, sim, date, base_dir)
+    #base_dir = "/Users/tanviingle/Documents/Wilke/phix174/"
+
