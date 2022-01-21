@@ -87,7 +87,7 @@ def run_pt(gen, pA, pB, pD):
     # Run simulation
     print("running simulation")
     model.simulate(time_limit=1200, time_step=5,
-                   output=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ptrun.tsv")
+                   output=base_dir + "output/" + str(date) + "/scenario_" + str(scenario) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ptrun.tsv")
     print("Simulation successful!")
 
 
