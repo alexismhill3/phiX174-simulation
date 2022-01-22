@@ -104,7 +104,7 @@ def get_error(file):
     else:
         sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
         sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
-        error = mean_squared_error(sim.exp, sim.norm, squared=False)
+        error = round(mean_squared_error(sim.exp, sim.norm, squared=False), 5)
         return (error)
 
 def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
@@ -127,7 +127,7 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
 
     no_change = 0
 
-    while (gen < 100):
+    while (gen < 201):
         # STEP 1: Randomly select promoter to optimize
         print(gen)
 
@@ -184,7 +184,7 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
 
         # STEP 4: Compare Old Error to New Error;
         if ((new_error == -1 or new_error >= old_error)):
-            if (no_change >= 4):
+            if (no_change >= 5):
                 no_change = 0
                 continue
             print("entering error loop")
@@ -194,7 +194,7 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
             old_error = report_df.at[gen - 1, "error"]
 
             if (pX == "pA"):
-                step = oA * (np.random.normal(0.5, 0.2, 1)[0])
+                step = oA * (np.random.normal(0, 0.2, 1)[0])
                 pA = report_df.at[gen - 1, "pA"] + np.exp(step)
                 print(step)
                 # print(pA, pB, pD)
@@ -205,7 +205,7 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
                 continue
 
             if (pX == "pB"):
-                step = oB * (np.random.normal(0.5, 0.2, 1)[0])
+                step = oB * (np.random.normal(0, 0.2, 1)[0])
                 pB = report_df.at[gen - 1, "pB"] + np.exp(step)
                 print(step)
                 # print(pA, pB, pD)
@@ -216,7 +216,7 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
                 continue
 
             if (pX == "pD"):
-                step = oD * (np.random.normal(0.5, 0.2, 1)[0])
+                step = oD * (np.random.normal(0, 0.2, 1)[0])
                 pD = report_df.at[gen - 1, "pD"] + np.exp(step)
                 print(step)
                 # print(pA, pB, pD)
