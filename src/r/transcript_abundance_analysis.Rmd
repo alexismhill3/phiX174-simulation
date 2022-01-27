@@ -1,0 +1,82 @@
+---
+title: "Transcript Abundances Analysis"
+author: "Tanvi Ingle"
+date: "1/25/2022"
+output: html_document
+---
+
+### Load Relevant Packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+```
+
+### General function to plot normalized transcript abundances
+```{r}
+plot_abundances <- function(basedir, filename, timestamp){
+
+my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+fig <- read_tsv(paste0(basedir, filename)) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_color_manual(values = "black") + 
+       scale_y_continuous(limits = c(0, 18), 
+                          breaks = c(0,3,6,9,12,15,18)) + 
+       ylab("Transcript abundances normalized to gene A") + 
+       geom_hline(yintercept=1, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=6, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=17, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=11, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=5, linetype="dashed", color = "red") + 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+
+return(fig)
+}
+```
+
+### Set directories & Parameters
+```{r}
+basedir = "/Users/tanviingle/Documents/Wilke/phix174/output/"
+filename = "test/scenario_A/sim_1_gen_16_ptrun.tsv"
+timestamp = 1200
+
+plot_abundances(basedir, "manual/4.tsv", 1200) + ggtitle("M4")
+plot_abundances(basedir, "manual/5.tsv", 1200) + ggtitle("M5")
+plot_abundances(basedir, "manual/6.tsv", 1200) + ggtitle("M6") 
+plot_abundances(basedir, "manual/7.tsv", 1200) + ggtitle("M7")
+
+plot_abundances(basedir, filename, 1200)
+
+#plot_abundances(basedir, "manual_2.tsv", 1200)
+```
+
+```{r}
+result <- read_csv(file = paste0(basedir, "test/scenario_A/sim_1_report.csv"))
+
+error_plot <- result %>% 
+        ggplot(aes(x = gen, y = error)) +
+        geom_line() + 
+        ylim(c(0,10**2)) + 
+        cowplot::theme_minimal_grid()
+
+
+```
+

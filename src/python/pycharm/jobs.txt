@@ -1,10 +1,1 @@
-python3 phix174_promoter_opt.py A 1 1222022 "/stor/work/Wilke/tingle/phix174/" 10 8 12 7 12 9
-python3 phix174_promoter_opt.py A 2 1222022 "/stor/work/Wilke/tingle/phix174/" 10 8 12 7 12 9
-python3 phix174_promoter_opt.py A 3 1222022 "/stor/work/Wilke/tingle/phix174/" 10 8 12 7 12 9
-python3 phix174_promoter_opt.py A 4 1222022 "/stor/work/Wilke/tingle/phix174/" 10 8 12 7 12 9
-python3 phix174_promoter_opt.py A 5 1222022 "/stor/work/Wilke/tingle/phix174/" 10 8 12 7 12 9
-python3 phix174_promoter_opt.py B 1 1222022 "/stor/work/Wilke/tingle/phix174/" 11 9 13 8 13 10
-python3 phix174_promoter_opt.py B 2 1222022 "/stor/work/Wilke/tingle/phix174/" 11 9 13 8 13 10
-python3 phix174_promoter_opt.py B 3 1222022 "/stor/work/Wilke/tingle/phix174/" 11 9 13 8 13 10
-python3 phix174_promoter_opt.py B 4 1222022 "/stor/work/Wilke/tingle/phix174/" 11 9 13 8 13 10
-python3 phix174_promoter_opt.py B 5 1222022 "/stor/work/Wilke/tingle/phix174/" 11 9 13 8 13 10
+python3 phix174_promoter_opt.py A 1 test "/Users/tanviingle/Documents/Wilke/phix174/" 11 10 12.8 10 12.3 11

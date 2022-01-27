@@ -194,9 +194,15 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
             old_error = report_df.at[gen - 1, "error"]
 
             if (pX == "pA"):
-                step = oA * (np.random.normal(0, 0.2, 1)[0])
-                pA = report_df.at[gen - 1, "pA"] + np.exp(step)
-                print(step)
+                step = (np.random.normal(0, 0.2, 1)[0])
+                while (abs(step) > 1 or step == 0):
+                    step = np.random.normal(0, 0.2, 1)[0]
+                print("step = ", step)
+                print("increment by = ", step * np.exp(oA))
+                pA = report_df.at[gen - 1, "pA"] + (step * np.exp(oA))
+                #step = oA * (np.random.normal(0, 0.2, 1)[0])
+                #pA = report_df.at[gen - 1, "pA"] + np.exp(step)
+                #print(step)
                 # print(pA, pB, pD)
                 new_run = {'gen': gen, 'pA': pA, 'pB': pB, 'pD': pD, 'error': new_error}
                 report_df = report_df.append(new_run, ignore_index=True)
@@ -205,9 +211,15 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
                 continue
 
             if (pX == "pB"):
-                step = oB * (np.random.normal(0, 0.2, 1)[0])
-                pB = report_df.at[gen - 1, "pB"] + np.exp(step)
-                print(step)
+                step = (np.random.normal(0, 0.2, 1)[0])
+                while (abs(step) > 1 or step == 0):
+                    step = np.random.normal(0, 0.2, 1)[0]
+                print("step = ", step)
+                print("increment by = ", step * np.exp(oB))
+                pB = report_df.at[gen - 1, "pB"] + (step * np.exp(oB))
+                #step = oB * (np.random.normal(0.5, 0.2, 1)[0])
+                #pB = report_df.at[gen - 1, "pB"] + np.exp(step)
+                #print(step)
                 # print(pA, pB, pD)
                 new_run = {'gen': gen, 'pA': pA, 'pB': pB, 'pD': pD, 'error': new_error}
                 report_df = report_df.append(new_run, ignore_index=True)
@@ -216,10 +228,16 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
                 continue
 
             if (pX == "pD"):
-                step = oD * (np.random.normal(0, 0.2, 1)[0])
-                pD = report_df.at[gen - 1, "pD"] + np.exp(step)
-                print(step)
+                #step = oD * (np.random.normal(0, 0.2, 1)[0])
+                #pD = report_df.at[gen - 1, "pD"] + np.exp(step)
+                #print(step)
                 # print(pA, pB, pD)
+                step = (np.random.normal(0, 0.2, 1)[0])
+                while (abs(step) > 1 or step == 0):
+                    step = np.random.normal(0, 0.2, 1)[0]
+                print("step = ", step)
+                print("increment by = ", step * np.exp(oD))
+                pD = report_df.at[gen - 1, "pD"] + (step * np.exp(oD))
                 new_run = {'gen': gen, 'pA': pA, 'pB': pB, 'pD': pD, 'error': new_error}
                 report_df = report_df.append(new_run, ignore_index=True)
                 gen = gen + 1
@@ -244,12 +262,12 @@ if __name__ == '__main__':
     sim = sys.argv[2]
     date = sys.argv[3]
     base_dir = sys.argv[4]
-    uA = int(sys.argv[5])
-    oA = int(sys.argv[6])
-    uB = int(sys.argv[7])
-    oB = int(sys.argv[8])
-    uD = int(sys.argv[9])
-    oD = int(sys.argv[10])
+    uA = float(sys.argv[5])
+    oA = float(sys.argv[6])
+    uB = float(sys.argv[7])
+    oB = float(sys.argv[8])
+    uD = float(sys.argv[9])
+    oD = float(sys.argv[10])
     main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir)
     #base_dir = "/Users/tanviingle/Documents/Wilke/phix174/"
 
