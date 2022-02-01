@@ -1,0 +1,502 @@
+---
+title: "1262022_analysis"
+author: "Tanvi Ingle"
+date: "1/27/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+```
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+# Functions & Variables I use a lot
+basedir <- "/stor/work/Wilke/tingle/phix174/output/1262022/"
+
+# get_reports() retrieves the reports for all the simulation runs in a specified scenario
+# had hardcoded case for Scenario B where there is no simulation 1
+get_reports <- function(basedir, filedir, total_sims){
+  report <- data.frame()
+  if(filedir == "scenario_B/") {
+    i = 2
+  }
+  else
+    i = 1
+  while (i<=total_sims) {
+    sim = read_csv(paste0(basedir, filedir, "sim_", i, "_report.csv")) 
+    sim$sim = i
+    report <- rbind(report, sim)
+    i <- i + 1
+  }
+  report <- report %>% 
+    select(-X1)
+  return(report)
+}
+
+# plot_reports() plots the RMSE v generations for all the simulations in a given scenario
+plot_reports <- function(basedir, filedir, total_sims, title){
+  figure <- get_reports(basedir, filedir, total_sims) %>% 
+    filter(!is.na(gen)) %>% 
+    filter(error < 10) %>% 
+    ggplot(aes(x = gen, y = error)) +
+    geom_line() + 
+    facet_wrap(~sim) + 
+    ggtitle(title) + 
+    xlab("Generations") +
+    ylab("RMSE") + 
+    cowplot::theme_minimal_grid(12)
+  
+  return(figure)
+}
+
+# logel_plot() recreates the barplot transcript abundances from Logel 2020
+# sim = simulation number, gen = generation of interest within the simulation, timestamp = pinetree run
+logel_plot <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, "_ptrun.tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       scale_y_continuous(limits = c(0, 18), 
+                          breaks = c(0,3,6,9,12,15,18)) + 
+       #ylab("Transcript abundances") + 
+       ylab("")+ 
+       geom_hline(yintercept=1, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=6, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=17, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=11, linetype="dashed", color = "red") + 
+       geom_hline(yintercept=5, linetype="dashed", color = "red") + 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+# logeL_timeseries called logel_plot() to show how distribution changes over time (start, middle, end)
+# sim = simulation number, gen = last generation of interest, timestamp = pinetree run
+
+logel_timeseries <- function(basedir, filedir, sim, gen, timestamp) {
+  
+  sim_start <- logel_plot(basedir, filedir, sim, gen = 1, timestamp = 1200)
+  sim_middle <- logel_plot(basedir, filedir, sim, gen = gen/2, timestamp = 1200)
+  sim_end <- logel_plot(basedir, filedir, sim, gen = gen, timestamp = 1200)
+  
+  figure <- plot_grid(sim_start, sim_middle, sim_end, 
+                      label_x = "genes", label_y = "transcript abundances", 
+                      ncol = 3, nrow = 1)
+                     
+  return(figure)
+}
+
+```
+
+
+### **Objective**
+Here I will analyze the results from the promoter optimization run on 1-26-2022. For this optimization attempt, I ran 5 scenarios with unique distributions for promoters A, B, and D. Each scenario was simmulated 10 times. Each simulation was run for 300 generations. 
+
+Here are the details of each run. Each value represents the exponent on *e*, ie if uA = 11, then the mean strength of promoter A is e^11.
+
+> Starting promoter distributions
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+scenarios <- data.frame(scenario = c("A", "B", "C", "D", "E"), 
+                        uA = c(11, 11.8, 12.21, 12.8, 13.2),
+                        oA = c(10, 10, 10, 10, 10),
+                        uB = c(12.8, 13.5, 14.33, 14.8, 15.4), 
+                        oB = c(10, 12, 12, 12, 12),
+                        uD = c(12.3, 12.8, 14.11, 14.5, 14.8),
+                        oD = c(11, 11, 11, 11, 11))
+kable(scenarios) %>% 
+   kable_styling(latex_options = "striped")
+```
+
+### **Dive into Scenario A**
+#### **What do the reports for each simulation look like?** 
+
+For Scenario A, I want to explore the parameter space (ie promoter strengths) below what I found manually. First, I look at how the RMSE changes over 300 generations in each of the 10 simulations. Here are my observations:
+
+1. Simulation 2 report is missing. For some reason it quit the simulation at generation XXX. Next time I'll use 'nohub' with the disown command so that it will save the output & I can trace the error. 
+
+2. Simulations 3, 4, 7, and 10 have the lowest errors. Simulations 1, 5, 6, and 9 look pretty similar, with an error around 9ish. Simulation 8 was the only one which (strangely) increased in error over time. From this it seems like the optimization techniques works ok -- **should I run it for more generations?**
+
+> Scenario A - Change in Error over Generations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- "scenario_A/"
+scenario_A <- plot_reports(basedir, filedir, 10, "Figure 1: Scenario A")
+scenario_A
+```
+
+#### **What do the distributions look like for the lowest error simulations?**
+
+> Scenario A - Associated Errors for the best simulations
+
+For Scenario A, simulations 3, 4, 7, and 10 had the lowest errors at the 300th generation. 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+scenario_A_report <- get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(3, 4, 7, 10)) %>% 
+  filter(gen == 300) 
+
+kable(scenario_A_report) %>% 
+   kable_styling(latex_options = "striped")
+```
+
+For Scenario A, the distributions for sims 3, 4, and 7 are qualitatively the best. Simulation 10 had no expression, revealing that RMSE score alone is not enough to find the best promoter values. **Should I use another error metric? cosine error?** Visually & quantitatively, sim 7 is the best of the Scenario A batch. 
+
+> Final Transcript Abundances for the best of Scenario A
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim3 <- logel_plot(basedir, filedir, 3, 300, 1200) + 
+  ggtitle("sim 3")
+
+sim4 <- logel_plot(basedir, filedir, 4, 300, 1200) +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("sim 4")
+  
+sim7 <- logel_plot(basedir, filedir, 7, 300, 1200) +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("sim 7")
+
+sim10 <- logel_plot(basedir, filedir, 10, 300, 1200) + 
+  theme(axis.title.y = element_blank()) + 
+  ggtitle("sim 10")
+
+scenario_A_best <- plot_grid(sim3, sim4, sim7, sim10, ncol = 2)
+remove(sim3, sim4, sim7, sim10)
+
+scenario_A_best
+```
+
+Here is how the sims 3, 4, and 7 change over time (gen 1, gen 150, gen 300). TOP = sim 3, MIDDLE = sim 4, and BOTTOM = sim 7
+
+> Evolution of transcript abundances over generations (Sim 3, 4, 7) - Scenario A
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim3_time <- logel_timeseries(basedir, filedir, 3, 300, 1200)
+sim4_time <- logel_timeseries(basedir, filedir, 4, 300, 1200)
+sim7_time <- logel_timeseries(basedir, filedir, 7, 300, 1200)
+
+plot_grid(sim3_time, sim4_time, sim7_time, nrow = 3)
+```
+
+### **Dive into Scenario B**
+#### **What do the reports for each simulation look like?** 
+
+For Scenario B, I want to explore the parameter space (ie promoter strengths) below what I found manually. First, I look at how the RMSE changes over 300 generations in each of the 10 simulations. Here are my observations:
+
+1. Simulation 1 report is missing. For some reason it quit the simulation at generation XXX. Next time I'll use 'nohub' with the disown command so that it will save the output & I can trace the error. 
+
+2. Simulations 2, 4, 5, 6, 9, and 10 have the lowest errors. Simulations 3, 7, and 8 look pretty similar, with an error around 9ish. Simulations 4, 5, and 6 interestingly increased over time but still had relatively lower errors. 
+
+> Scenario B - Change in Error over Generations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- "scenario_B/"
+scenario_B <- plot_reports(basedir, filedir, 10, "Figure 2: Scenario B")
+scenario_B
+```
+
+#### **What do the distributions look like for the lowest error simulations?**
+
+For Scenario B, simulations 2, 4, 5, 6, 9, and 10 have the lowest errors at the 300th generation. 
+
+> Scenario B - Associated Errors for the best simulations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+scenario_B_report <- get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(2, 4, 5, 6, 9, 10)) %>% 
+  filter(gen == 300) 
+
+kable(scenario_B_report) %>% 
+   kable_styling(latex_options = "striped")
+```
+
+For Scenario B, the none of the distributions look particularly good -- sim 6 looks the best because it captures the step between genes BKC and DEJ. Also, sims 4 and 9 still reported a low error but are missing gene expressions. 
+
+> Final Transcript Abundances for the best of Scenario B
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim2 <- logel_plot(basedir, filedir, 2, 300, 1200) + 
+  ggtitle("sim 2")
+
+sim4 <- logel_plot(basedir, filedir, 4, 300, 1200) +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("sim 4")
+  
+sim5 <- logel_plot(basedir, filedir, 5, 300, 1200) +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("sim 5")
+
+sim6 <- logel_plot(basedir, filedir, 6, 300, 1200) +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("sim 6")
+
+sim9 <- logel_plot(basedir, filedir, 9, 300, 1200) +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("sim 9")
+
+sim10 <- logel_plot(basedir, filedir, 10, 300, 1200) + 
+  theme(axis.title.y = element_blank()) + 
+  ggtitle("sim 10")
+
+scenario_B_best <- plot_grid(sim2, sim4, sim5, sim6, sim9, sim10, ncol = 3)
+remove(sim2, sim4, sim5, sim6, sim9, sim10)
+
+scenario_B_best
+```
+
+Here is how the sims 2, 4, 5, 6, 9, and 10 change over time (gen 1, gen 150, gen 300). 
+
+> Evolution of transcript abundances over generations (Sim 2, 4, 5, 6, 9, 10) - Scenario B
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim2_time <- logel_timeseries(basedir, filedir, 3, 300, 1200)
+sim4_time <- logel_timeseries(basedir, filedir, 4, 300, 1200)
+sim5_time <- logel_timeseries(basedir, filedir, 5, 300, 1200)
+sim6_time <- logel_timeseries(basedir, filedir, 6, 300, 1200)
+sim9_time <- logel_timeseries(basedir, filedir, 9, 300, 1200)
+sim10_time <- logel_timeseries(basedir, filedir, 10, 300, 1200)
+
+plot_grid(sim2_time, sim4_time, sim5_time, nrow = 3)
+plot_grid(sim6_time, sim9_time, sim10_time, nrow = 3) 
+```
+
+
+### **Dive into Scenario C**
+#### **What do the reports for each simulation look like?** 
+
+For Scenario C, I want to explore the parameter space (ie promoter strengths) below what I found manually. First, I look at how the RMSE changes over 300 generations in each of the 10 simulations. Here are my observations:
+
+1. Simulations 1, 3, 6, and 10 have the lowest errors. Simulations 3, 9, and 10 all increase in error for most generations but then decrease towards the end. 
+
+> Scenario C - Change in Error over Generations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- "scenario_C/"
+scenario_C <- plot_reports(basedir, filedir, 10, "Figure 3: Scenario C")
+scenario_C
+```
+
+#### **What do the distributions look like for the lowest error simulations?**
+
+For Scenario C, simulations 1, 3, 6, and 10 have the lowest errors at the 300th generation. 
+
+> Scenario C - Associated Errors for the best simulations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+scenario_C_report <- get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(1, 3, 6, 10)) %>% 
+  filter(gen == 300) 
+
+kable(scenario_C_report) %>% 
+   kable_styling(latex_options = "striped")
+```
+
+For Scenario C, the none of the distributions look particularly good -- sim 1 and sim 10 are the best, however they do not have the step whise increase in gene expression for genes BKC to DEJ. Sim 6 has too low expression levels while sim 3 is missing gene expression for genes BKCDEJ. 
+
+> Final Transcript Abundances for the best of Scenario C
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim1 <- logel_plot(basedir, filedir, 1, 300, 1200) + 
+  ggtitle("sim 1")
+
+sim3 <- logel_plot(basedir, filedir, 3, 300, 1200) + 
+  ggtitle("sim 3")
+
+sim6 <- logel_plot(basedir, filedir, 6, 300, 1200) + 
+  ggtitle("sim 6")
+
+sim10 <- logel_plot(basedir, filedir, 10, 300, 1200) + 
+  ggtitle("sim 10")
+
+scenario_C_best <- plot_grid(sim1, sim3, sim6, sim10, ncol = 2)
+remove(sim1, sim3, sim6, sim10)
+scenario_C_best
+```
+
+> Evolution of transcript abundances over generations (Sim 1, 3, 6, 10) - Scenario C
+
+Here is how the sims 1, 3, 6, 10 change over time (gen 1, gen 150, gen 300). 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim1_time <- logel_timeseries(basedir, filedir, 1, 300, 1200)
+sim3_time <- logel_timeseries(basedir, filedir, 3, 300, 1200)
+sim6_time <- logel_timeseries(basedir, filedir, 6, 300, 1200)
+sim10_time <- logel_timeseries(basedir, filedir, 10, 300, 1200)
+
+plot_grid(sim1_time, sim3_time, sim6_time, sim10_time, nrow = 4)
+```
+
+
+### **Dive into Scenario D**
+#### **What do the reports for each simulation look like?** 
+
+For Scenario D, I want to explore the parameter space (ie promoter strengths) below what I found manually. First, I look at how the RMSE changes over 300 generations in each of the 10 simulations. Here are my observations:
+
+1. Simulations 3, 7, and 8 have the lowest errors. Simulations 1 and 2 increase in error but never decrease. Scenarios 4, 5, 6, 9, and 10 have an RSME of 9ish. 
+
+> Scenario D - Change in Error over Generations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- "scenario_D/"
+scenario_D <- plot_reports(basedir, filedir, 10, "Figure 4: Scenario D")
+scenario_D
+```
+
+#### **What do the distributions look like for the lowest error simulations?**
+
+For Scenario D, simulations 4, 5, 6, 9, and 10 have the lowest errors at the 300th generation. 
+
+> Scenario D - Associated Errors for the best simulations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+scenario_D_report <- get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(4, 5, 6, 9, 10)) %>% 
+  filter(gen == 300) 
+
+kable(scenario_D_report) %>% 
+   kable_styling(latex_options = "striped")
+```
+
+For Scenario D, the none of the distributions look particularly good -- at least all of the simulations had all genes expressed. **Why could increasing promoter values result in low transcript abundance levels?**
+
+> Final Transcript Abundances for the best of Scenario D
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim4 <- logel_plot(basedir, filedir, 4, 300, 1200) + 
+  ggtitle("sim 4")
+
+sim5 <- logel_plot(basedir, filedir, 5, 300, 1200) + 
+  ggtitle("sim 5")
+
+sim6 <- logel_plot(basedir, filedir, 6, 300, 1200) + 
+  ggtitle("sim 6")
+
+sim9 <- logel_plot(basedir, filedir, 9, 300, 1200) + 
+  ggtitle("sim 9")
+
+sim10 <- logel_plot(basedir, filedir, 10, 300, 1200) + 
+  ggtitle("sim 10")
+
+scenario_D_best <- plot_grid(sim4, sim5, sim6, sim9, sim10, ncol = 3)
+remove(sim4, sim5, sim6, sim9, sim10)
+scenario_D_best
+```
+
+Here is how the sims 4, 5, 6, 9, and 10 change over time (gen 1, gen 150, gen 300). 
+
+> Evolution of transcript abundances over generations (Sim 4, 5, 6, 9, 10) - Scenario D
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim4_time <- logel_timeseries(basedir, filedir, 1, 300, 1200)
+sim5_time <- logel_timeseries(basedir, filedir, 3, 300, 1200)
+sim6_time <- logel_timeseries(basedir, filedir, 6, 300, 1200)
+#sim9_time <- logel_timeseries(basedir, filedir, 9, 300, 1200)
+sim10_time <- logel_timeseries(basedir, filedir, 10, 300, 1200)
+
+plot_grid(sim4_time, sim5_time, nrow = 2)
+plot_grid(sim6_time, sim10_time, nrow = 2)
+```
+
+
+### **Dive into Scenario E**
+#### **What do the reports for each simulation look like?** 
+
+For Scenario E, I want to explore the parameter space (ie promoter strengths) below what I found manually. First, I look at how the RMSE changes over 300 generations in each of the 10 simulations. Here are my observations:
+
+1. Simulations 2, 4, 8, and 9 have the lowest error. The others all converge around an RMSE of 9ish. 
+
+> Scenario E - Change in Error over Generations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- "scenario_E/"
+scenario_E <- plot_reports(basedir, filedir, 10, "Figure 5: Scenario E")
+scenario_E
+```
+
+#### **What do the distributions look like for the lowest error simulations?**
+
+For Scenario E, simulations 2, 4, 8, and 9 have the lowest errors at the 300th generation. 
+
+> Scenario E - Associated Errors for the best simulations
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+scenario_E_report <- get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(2, 4, 8, 9)) %>% 
+  filter(gen == 300) 
+
+kable(scenario_E_report) %>% 
+   kable_styling(latex_options = "striped")
+```
+
+For Scenario E, simulation 4 looks good because it captures the step wise increase from BKC to DEJ, yet the abundances for DEJ aren't high enough.  Simulation 8 also looks good since it is high enough, however there is no step wise increase. Simulation 2 is missing expression in genes BKCDEJ and simulation 9 is meh. 
+
+> Final Transcript Abundances for the best of Scenario E
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim2 <- logel_plot(basedir, filedir, 2, 300, 1200) + 
+  ggtitle("sim 2")
+
+sim4 <- logel_plot(basedir, filedir, 4, 300, 1200) + 
+  ggtitle("sim 4")
+
+sim8 <- logel_plot(basedir, filedir, 8, 300, 1200) + 
+  ggtitle("sim 8")
+
+sim9 <- logel_plot(basedir, filedir, 9, 300, 1200) + 
+  ggtitle("sim 9")
+
+scenario_E_best <- plot_grid(sim2, sim4, sim8, sim9, ncol = 2)
+remove(sim2, sim4, sim8, sim9)
+scenario_E_best
+```
+
+Here is how the sims 2, 4, 8, 9 change over time (gen 1, gen 150, gen 300). 
+
+> Evolution of transcript abundances over generations (Sim 2, 4, 8, 9) - Scenario E
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim2_time <- logel_timeseries(basedir, filedir, 2, 300, 1200)
+sim4_time <- logel_timeseries(basedir, filedir, 4, 300, 1200)
+sim8_time <- logel_timeseries(basedir, filedir, 8, 300, 1200)
+sim9_time <- logel_timeseries(basedir, filedir, 9, 300, 1200)
+
+plot_grid(sim2_time, sim4_time, nrow = 2)
+plot_grid(sim8_time, sim9_time, nrow = 2)
+```
+
+
+### **Final Thoughts**
+1. Increasing promoter strengths did not generally result in better results. In fact, the lower 2 scenarios (A & B) performed the best
+
+2. The best simulations were XXX close to the parameter values I found while manually toggling the system. Note: my manual values resulted in an error of YYY.
+
+3. Next time, rerun with smaller mean & less broad *~N(u,o)* for the promoters. 
+
+4. Other changes to the optimization algorithm include: 
+ a) 
+

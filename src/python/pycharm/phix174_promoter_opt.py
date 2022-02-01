@@ -127,7 +127,7 @@ def main(uA, oA, uB, oB, uD, oD, scenario, sim, date, base_dir):
 
     no_change = 0
 
-    while (gen < 201):
+    while (gen < 301):
         # STEP 1: Randomly select promoter to optimize
         print(gen)
 
