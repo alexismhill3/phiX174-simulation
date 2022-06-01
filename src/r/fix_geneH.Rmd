@@ -1,0 +1,179 @@
+---
+title: "fix_geneH"
+author: "Tanvi Ingle"
+date: "3/18/2022"
+output: html_document
+---
+Libraries 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+require(readr)
+```
+
+Common Functions & Base directory 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+# Functions & Variables I use a lot
+logel_plot <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       scale_y_continuous(limits = c(0, 18), 
+                          breaks = c(0,3,6,9,12,15,18)) + 
+       ylab("")+ 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+```
+
+### **Increase Number of Ribosomes**
+
+I tried increasing the number of ribosomes, the lengthening duration of the infection cycle, dramatically decreasing the strength of terminator G/H/F/J, adding a secret, strong promoter before gene H, dividing the cell size by 5, increase the ribosome binding strength. Still NO protein H. I'm making plenty of transcript...but for some reason it's not being translated. 
+
+**EDIT** This works now!
+/stor/work/Wilke/tingle/phix174/src/python/pycharm/3152022/Fitness_Scenarios/Mar-19-2022.tsv
+"/stor/work/Wilke/tingle/phix174/output/3152022/fix_geneH/increase_ribosomes.tsv"
+```{r}
+get_fitness <- function(file, timepoint){
+  
+  pt_run <- as.data.frame(read_tsv(file)) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == timepoint) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    mutate(stoich = protein/copies) %>%
+    summarise(virions = min(stoich))
+  
+  return(pt_run$virions[1])
+}
+
+get_fitness("/stor/work/Wilke/tingle/phix174/output/3152022/fix_geneH/increase_ribosomes.tsv", 1200)
+
+
+as.data.frame(read_tsv("/stor/work/Wilke/tingle/phix174/output/3152022/fix_geneH/increase_ribosomes.tsv")) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == 1200) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  
+```
+
+### **Inspecting the Genomic Coords**
+
+I'm going back to the drawing board to see how the genomic architecture of the linearized genomic might be affecting the results: 
+
+1. Terminator H is at the very end...so it doesn't really have an effect on anything (probably why in the optmization from 3152022 there was no real convergence in this value). **Since in the circular genomic tH is before pA...should I restructure the genome so it starts with tH, pA, gA..etc?**
+
+2. Maybe the combined effect of tJ, tF, and tG is too strong...so we have fewer mRNA transcripts for gene H. I guess the qPCR data may not be been realistic. **The RNAseq data had higher relative expression levels of gene H than the qPCR distribution....should I try optimizing to allow for a higher expression of gene H?**
+
+```{r}
+genomic_coords <- as.data.frame(read_csv("/stor/work/Wilke/tingle/phix174/output/genomic_coords.csv")) %>% 
+  select(type, name, new_start, new_end) %>% 
+  rbind(c("terminator", "J", 2402, 2403)) %>% 
+  rbind(c("terminator", "F", 3796, 3797)) %>% 
+  rbind(c("terminator", "G", 4332, 4333)) %>% 
+  rbind(c("terminator", "H", 5321, 5322)) %>% 
+  mutate(new_start = as.numeric(new_start),
+         new_end = as.numeric(new_end)) %>% 
+  arrange(new_start) %>% 
+  mutate(ymin = seq(from = 1, to = 95, by = 5),
+         ymax = seq(from = 6, to = 100, by = 5)) %>% 
+  ggplot() +
+  geom_rect(aes(xmin=new_start, xmax=new_end, ymin=ymin, ymax=ymax, fill = type), color = "black", alpha=0.5) +
+  geom_text(aes(x=new_start - 80, y=ymin + (ymax-ymin)/2, label=paste0(name)), size=4) +
+  cowplot::theme_minimal_grid() + 
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+
+### **Solution**
+Alexis found one issue - The Terminator positions should be in intragenic locations...NOT overlapping with genes. Revising genomic coordinates as follows. This still didnt fix the protein H problem. 
+```{r}
+as.data.frame(read_csv("/stor/work/Wilke/tingle/phix174/output/genomic_coords.csv")) %>% 
+  select(type, name, new_start, new_end) %>% 
+  rbind(c("terminator", "J", 2402, 2403)) %>% 
+  rbind(c("terminator", "F", 3796, 3797)) %>% 
+  rbind(c("terminator", "G", 4332, 4333)) %>% 
+  rbind(c("terminator", "H", 5321, 5322)) %>% 
+  mutate(new_start = as.numeric(new_start),
+         new_end = as.numeric(new_end)) %>% 
+  arrange(new_start) 
+
+
+
+as.data.frame(read_csv("/stor/work/Wilke/tingle/phix174/output/genomic_coords.csv")) %>%
+  select(type, name, new_start, new_end) %>% 
+  # rbind(c("terminator", "J", 2434, 2435)) %>% # After gene J, which ends at 2433
+  # rbind(c("terminator", "F", 3754, 3755)) %>% # After gene F, which ends at 3753
+  # rbind(c("terminator", "G", 4392, 4393)) %>% # After gene G, which ends at 4391
+  # rbind(c("terminator", "H", 46, 47)) %>% # After pA
+  rbind(c("terminator", "J", 2436, 2437)) %>% # After gene J, which ends at 2433
+  rbind(c("terminator", "F", 3796, 3797)) %>% # After gene F, which ends at 3753
+  rbind(c("terminator", "G", 4374, 4375)) %>% # After gene G, which ends at 4391
+  rbind(c("terminator", "H", 55, 56)) %>% # After pA
+  mutate(new_start = as.numeric(new_start),
+         new_end = as.numeric(new_end)) %>% 
+  arrange(new_start) %>% 
+  mutate(ymin = seq(from = 1, to = 95, by = 5),
+         ymax = seq(from = 6, to = 100, by = 5)) %>% 
+  ggplot() +
+  geom_rect(aes(xmin=new_start, xmax=new_end, ymin=ymin, ymax=ymax, fill = type), color = "black", alpha=0.5) +
+  geom_text(aes(x=new_start - 80, y=ymin + (ymax-ymin)/2, label=paste0(name)), size=4) +
+  cowplot::theme_minimal_grid() + 
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+I realized (and was heavily inspired by Alexis' code) that there needs to be a terminator after gene H in order for the protein to be generated. Which makes sense with the circular genomic structure...so when I add a terminator site X after gene H (arbitrarily lengthening the genome by 2 bp) it WORKS!! 
+
+Another solution (better bc it does not involve arbitrarily adding a new terminator) is to increase the space between gene G, terminator G, and gene H --> there is some overlapping that pinetree does not handle well. This works!!.
+
+
+
+
+
+
+
+
+
+
+
+

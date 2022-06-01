@@ -1,0 +1,226 @@
+---
+title: "2252022_analysis"
+author: "Tanvi Ingle"
+date: "3/1/2022"
+output: html_document
+---
+
+Libraries 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+```
+
+Common Functions & Base directory 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+# Functions & Variables I use a lot
+basedir <- "/stor/work/Wilke/tingle/phix174/output/2252022/"
+
+# get_reports() retrieves the reports for all the simulation runs in a specified scenario
+# had hardcoded case for Scenario B where there is no simulation 1
+get_reports <- function(basedir, filedir, total_sims){
+  report <- data.frame()
+  #if(filedir == "scenario_B/") {
+  #  i = 2
+  #}
+  #else 
+  i = 1
+  while (i<=total_sims) {
+    sim = read_csv(paste0(basedir, filedir, "sim_", i, "_report.csv")) 
+    sim$sim = i
+    report <- rbind(report, sim)
+    i <- i + 1
+  }
+  report <- report %>% 
+    select(-X1)
+  return(report)
+}
+
+# plot_reports() plots the RMSE v generations for all the simulations in a given scenario
+plot_reports <- function(basedir, filedir, total_sims, title){
+  x_scale <- c(0, 100, 200, 300, 400, 500)
+  
+  figure <- get_reports(basedir, filedir, total_sims) %>% 
+    filter(!is.na(gen)) %>% 
+    filter(gen > 0) %>% 
+    filter(error < 11) %>% 
+    ggplot(aes(x = gen)) +
+    geom_line(aes(y = error, color = "error"), color = "pink") + 
+    geom_line(aes(y = min_error, color = "min error"), color = "black") +
+    facet_wrap(~sim) + 
+    ggtitle(title) + 
+    xlab("Generations") +
+    ylab("RMSE") + 
+    ylim(c(1, 10)) + 
+    scale_x_continuous(breaks = x_scale) + 
+    cowplot::theme_minimal_grid(12) + 
+    theme(axis.text.x = element_text(size=11, angle= -45))
+  
+  return(figure)
+}
+
+# logel_plot() recreates the barplot transcript abundances from Logel 2020
+# sim = simulation number, gen = generation of interest within the simulation, timestamp = pinetree run
+logel_plot <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       scale_y_continuous(limits = c(0, 18), 
+                          breaks = c(0,3,6,9,12,15,18)) + 
+       ylab("")+ 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+# logeL_timeseries called logel_plot() to show how distribution changes over time (start, middle, end)
+# sim = simulation number, gen = last generation of interest, timestamp = pinetree run
+
+logel_timeseries <- function(basedir, filedir, sim, gen, timestamp) {
+  
+  sim_start <- logel_plot(basedir, filedir, sim, gen = 1, timestamp = 1200)+
+    ylab(paste0("Sim ", sim))
+  sim_middle <- logel_plot(basedir, filedir, sim, gen = gen/2, timestamp = 1200)
+  sim_end <- logel_plot(basedir, filedir, sim, gen = gen, timestamp = 1200)
+  
+  figure <- plot_grid(sim_start, sim_middle, sim_end, 
+                      label_x = "genes", label_y = "transcript abundances", 
+                      ncol = 3, nrow = 1)
+                     
+  return(figure)
+}
+```
+
+### **Objective**
+Here I will analyze the results from the promoter optimization run on 2-25-2022. These results are form the new optimization algorithm that differs from previous algorithms in several distinct ways: 
+
+### **Change in Error over Generations**
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- ""
+plot_reports(basedir, filedir, 20, "qPCR Simulations")
+```
+
+### **Final Minimum Errors**
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+col_order = c("sim", "gen", "pA", "pB", "pD", "error", "min_error")
+
+all_sims_report <- get_reports(basedir, filedir, 20) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(gen == 500) %>% 
+  group_by(sim)
+
+all_sims_report <- all_sims_report[ , col_order]
+
+kable(all_sims_report) %>% 
+  kable_styling(latex_options = "striped") %>% 
+  column_spec(c(1,7), bold = T)
+   
+```
+
+### **Final Transcript Abundances**
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+logel_report <- get_reports(basedir, filedir, 20) %>% 
+  group_by(sim) %>% 
+  mutate(final_min_error = min(min_error)) %>% 
+  filter(error == final_min_error) %>%  
+  filter(row_number()==1) %>% 
+  select(-error, -min_error)
+
+logel_report <- logel_report[ , c("sim", "gen", "pA", "pB", "pD", "final_min_error")]
+
+kable(logel_report) %>% 
+  kable_styling(latex_options = "striped")
+
+n = 1
+while(n < nrow(logel_report)){
+  figure <- logel_plot(basedir, filedir, 
+             as.numeric(logel_report$sim[n]), as.numeric(logel_report$gen[n]), 1200) + 
+    ggtitle(paste0("sim ", logel_report$sim[n], ", gen = ",logel_report$gen[n]))
+  
+  figure 
+  n = n + 1
+}
+
+logel_plot(basedir, filedir, 12, 296, 1200)
+
+
+
+```
+
+> Scenario A - Evolution of transcript abundances over generations for the best sims
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+sim5_time <- logel_timeseries(basedir, filedir, 5, 300, 1200) 
+sim6_time <- logel_timeseries(basedir, filedir, 6, 300, 1200) 
+sim8_time <- logel_timeseries(basedir, filedir, 8, 300, 1200) 
+#sim10_time <- logel_timeseries(basedir, filedir, 10, 300, 1200)
+
+plot_grid(sim5_time, sim6_time, sim8_time, nrow = 3)
+```
+
+> Scenario A - Here is how the promoter values change over time 
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(5,6,8)) %>% 
+  #filter(gen <= 201) %>% 
+  ggplot(aes(x = gen)) +
+  facet_wrap(. ~ sim) +
+  geom_line(aes(y = pA)) + 
+  scale_y_continuous(trans = log10_trans(),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = trans_format("log10", math_format(10^.x))) +
+  cowplot::theme_minimal_grid(12)
+
+get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(5,6,8)) %>%
+  ggplot(aes(x = gen)) +
+  facet_wrap(. ~ sim) +
+  scale_y_continuous(trans = log10_trans(),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = trans_format("log10", math_format(10^.x))) +
+  geom_line(aes(y = pB)) + 
+  cowplot::theme_minimal_grid(12)
+
+
+get_reports(basedir, filedir, 10) %>% 
+  filter(!is.na(gen)) %>% 
+  filter(sim %in% c(5,6,8)) %>%
+  ggplot(aes(x = gen)) +
+  facet_wrap(. ~ sim, scales="free_y") +
+  geom_line(aes(y = pD)) + 
+  scale_y_continuous(trans = log10_trans(),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = trans_format("log10", math_format(10^.x))) +
+  cowplot::theme_minimal_grid(12)
+  
+  # geom_line(aes(y = pB)) + 
+  # geom_line(aes(y = pD))
+```
+

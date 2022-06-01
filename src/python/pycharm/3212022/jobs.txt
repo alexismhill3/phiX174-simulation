@@ -1,0 +1,2 @@
+python3 phix174_opt_7.py 3212022 1 "/stor/work/Wilke/tingle/phix174/" 12 3
+

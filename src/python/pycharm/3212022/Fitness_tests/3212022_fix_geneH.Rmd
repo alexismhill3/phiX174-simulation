@@ -1,0 +1,48 @@
+---
+title: "3212022_fix_geneH"
+author: "Tanvi Ingle"
+date: "3/24/2022"
+output: html_document
+---
+Libraries 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+require(readr)
+```
+
+
+```{r}
+get_fitness <- function(file, timepoint){
+  
+  pt_run <- as.data.frame(read_tsv(file)) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == timepoint) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    mutate(stoich = protein/copies) %>%
+    summarise(virions = min(stoich))
+  
+  return(pt_run$virions[1])
+}
+
+test <- read_tsv("/stor/work/Wilke/tingle/phix174/src/python/pycharm/3212022/Fitness_tests/5400_nt.tsv")
+sim1_gen_108 <- read_tsv("/stor/work/Wilke/tingle/phix174/src/python/pycharm/3212022/Fitness_tests/5400_nt.tsv")
+sim20 <- read_tsv("/stor/work/Wilke/tingle/phix174/src/python/pycharm/3212022/Fitness_tests/5400_nt_sim20.tsv")
+sim15 <- read_tsv("/stor/work/Wilke/tingle/phix174/src/python/pycharm/3212022/Fitness_tests/5400_nt_sim15.tsv")
+sim3212022 <- read_tsv("/stor/work/Wilke/tingle/phix174/output/3212022/sim_9_gen_500.tsv")
+get_fitness("/stor/work/Wilke/tingle/phix174/src/python/pycharm/3212022/Fitness_tests/5400_nt_sim15.tsv", 1200)
+```
+

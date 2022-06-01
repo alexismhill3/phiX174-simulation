@@ -1,0 +1,39 @@
+---
+title: "fitness_algorithm"
+author: "Tanvi Ingle"
+date: "2/7/2022"
+output: html_document
+---
+
+
+
+### **Libraries** 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+```
+
+### **
+```{r}
+file <- "/stor/work/Wilke/tingle/phix174/output/1262022/scenario_A/sim_2_gen_300_ptrun.tsv"
+
+get_fitness <- function(dir) {
+  virions <- as.data.frame(read_tsv(dir)) %>% 
+    mutate(time = round(time)) %>% 
+    filter(time == 1200) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    filter(species %in%  c("gene_B", "gene_D", "gene_J", "gene_F", "gene_G", "gene_H")) %>% 
+    mutate(reactants = c(60, 240, 60, 60, 60, 12)) %>% 
+    mutate(LR = transcript/reactants) %>% 
+    mutate(virions = min(LR)*reactants) %>% 
+    mutate(left = transcript-virions)
+
+  return(max(virions$virions))
+}
+
+get_fitness(file)
+```
+

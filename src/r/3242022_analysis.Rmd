@@ -1,0 +1,289 @@
+---
+title: "3242022_analysis"
+author: "Tanvi Ingle"
+date: "3/24/2022"
+output: html_document
+---
+### Libraries
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+```
+
+Common Functions & Base directory 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+# Functions & Variables I use a lot
+basedir <- "/stor/work/Wilke/tingle/phix174/output/3242022/"
+
+# get_reports() retrieves the reports for all the simulation runs in a specified scenario
+# had hardcoded case for Scenario B where there is no simulation 1
+get_reports <- function(basedir, filedir, total_sims){
+  report <- data.frame()
+  #if(filedir == "scenario_B/") {
+  #  i = 2
+  #}
+  #else 
+  i = 1
+  while (i<=total_sims) {
+    sim = read_csv(paste0(basedir, filedir, "sim_", i, "_report.csv")) 
+    sim$sim = i
+    report <- rbind(report, sim)
+    i <- i + 1
+  }
+  # report <- report %>% 
+  #   select(-X1)
+  return(report)
+}
+
+# plot_reports() plots the RMSE v generations for all the simulations in a given scenario
+plot_reports <- function(basedir, filedir, total_sims, start_sim, end_sim, title){
+  x_scale <- c(0, 100, 200, 300, 400, 500)
+  
+  figure <- get_reports(basedir, filedir, total_sims) %>% 
+    filter(sim %in% c(start_sim : end_sim)) %>% 
+    filter(!is.na(gen)) %>% 
+    filter(gen > 0) %>% 
+    filter(error < 11) %>% 
+    ggplot(aes(x = gen)) +
+    geom_line(aes(y = error, color = "error"), color = "#CC79A7") + 
+    geom_line(aes(y = min_error, color = "min error"), color = "black") +
+    facet_wrap(~sim) + 
+    ggtitle(title) + 
+    xlab("Generations") +
+    ylab("RMSE") + 
+    #ylim(c(1, 10)) + 
+    scale_x_continuous(breaks = x_scale) + 
+    cowplot::theme_minimal_grid(12) + 
+    theme(axis.text.x = element_text(size=11, angle= -45))
+  
+  return(figure)
+}
+
+
+logel_plot <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       scale_y_continuous(limits = c(0, 18), 
+                          breaks = c(0,3,6,9,12,15,18)) + 
+       ylab("")+ 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+logel_timeseries <- function(basedir, filedir, sim, gen, timestamp) {
+  
+  sim_start <- logel_plot(basedir, filedir, sim, gen = 1, timestamp = 1200)+
+    ylab(paste0("Sim ", sim))
+  sim_middle <- logel_plot(basedir, filedir, sim, gen = gen/2, timestamp = 1200)
+  sim_end <- logel_plot(basedir, filedir, sim, gen = gen, timestamp = 1200)
+  
+  figure <- plot_grid(sim_start, sim_middle, sim_end, 
+                      label_x = "genes", label_y = "transcript abundances", 
+                      ncol = 3, nrow = 1)
+                     
+  return(figure)
+}
+
+get_fitness <- function(file, timepoint){
+  
+  pt_run <- as.data.frame(read_tsv(file)) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == timepoint) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    mutate(stoich = protein/copies) %>%
+    summarise(virions = min(stoich))
+  
+  return(pt_run$virions[1])
+}
+
+```
+
+### **Change in Error over Generations**
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+filedir <- ""
+plot_reports(basedir, filedir, 50, 1, 25, "qPCR Simulations: 1-25")
+plot_reports(basedir, filedir, 50, 26, 50, "qPCR Simulations: 26-50")
+```
+
+### **Final Minimum Errors**
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+col_order = c("sim", "gen", "pA", "pB", "pD", "tJ", "tF", "tG", "tH", "min_error", "virions")
+
+all_sims_report <- get_reports(basedir, filedir, 50) %>% 
+  group_by(sim) %>% 
+  mutate(final_min_error = min(min_error)) %>% 
+  filter(error == final_min_error) %>%  
+  filter(row_number()==1) %>% 
+  #filter(min_error < 2) %>% 
+  arrange(min_error) %>% 
+  mutate(virions = get_fitness(paste0(basedir, "sim_", sim, "_gen_", gen, ".tsv"), 1200))
+
+all_sims_report <- all_sims_report[ , col_order]
+
+fig <- all_sims_report %>% 
+  select(-virions)
+kable(fig) %>% 
+  kable_styling(latex_options = "striped") %>% 
+  row_spec(c(1:4), background = "#FDE1F5")
+
+#get_fitness("/stor/work/Wilke/tingle/phix174/src/python/pycharm/3252022/decompressed.tsv", 1200)
+```
+
+### **Summary Table of Simulation Outputs**
+```{r}
+# exp_report <- all_sims_report %>% 
+#   mutate(pA = exp(pA),
+#          pB = exp(pB),
+#          pD = exp(pD))
+# 
+# sum_pA <- c(Param = "pA",
+#             Min = round(format(min(exp_report$pA), scientific = TRUE),4),
+#             Q1 = round(quantile(exp_report$pA, .25),4),
+#             Avg = round(mean(exp_report$pA),4), 
+#             St_Dev = round(sd(exp_report$pA),4),
+#             Q3 = round(quantile(exp_report$pA, .75), 4),
+#             Max = round(max(exp_report$pA),4))
+# 
+# sum_pB <- c(Param = "pB",
+#             Min = round(min(exp_report$pB),4),
+#             Q1 = round(quantile(exp_report$pB, .25),4),
+#             Avg = round(mean(exp_report$pB),4), 
+#             St_Dev = round(sd(exp_report$pB),4),
+#             Q3 = round(quantile(exp_report$pB, .75), 4),
+#             Max = round(max(exp_report$pB),4))
+# 
+# 
+# sum_pD <- c(Param = "pD",
+#             Min = round(min(exp_report$pD),4),
+#             Q1 = round(quantile(exp_report$pD, .25),4),
+#             Avg = round(mean(exp_report$pD),4), 
+#             St_Dev = round(sd(exp_report$pD),4),
+#             Q3 = round(quantile(exp_report$pD, .75), 4),
+#             Max = round(max(exp_report$pD),4))
+# 
+# sum_tJ <- c(Param = "tJ",
+#             Min = round(min(exp_report$tJ),4),
+#             Q1 = round(quantile(exp_report$tJ, .25),4),
+#             Avg = round(mean(exp_report$tJ),4), 
+#             St_Dev = round(sd(exp_report$tJ),4),
+#             Q3 = round(quantile(exp_report$tJ, .75), 4),
+#             Max = round(max(exp_report$tJ),4))
+# 
+# sum_tF <- c(Param = "tF",
+#             Min = round(min(exp_report$tF),4),
+#             Q1 = round(quantile(exp_report$tF, .25),4),
+#             Avg = round(mean(exp_report$tF),4), 
+#             St_Dev = round(sd(exp_report$tF),4),
+#             Q3 = round(quantile(exp_report$tF, .75), 4),
+#             Max = round(max(exp_report$tF),4))
+# 
+# sum_tG <- c(Param = "tG",
+#             Min = round(min(exp_report$tG),4),
+#             Q1 = round(quantile(exp_report$tG, .25),4),
+#             Avg = round(mean(exp_report$tG),4), 
+#             St_Dev = round(sd(exp_report$tG),4),
+#             Q3 = round(quantile(exp_report$tG, .75), 4),
+#             Max = round(max(exp_report$tG),4))
+# 
+# sum_tH <- c(Param = "tH",
+#             Min = round(min(exp_report$tH),4),
+#             Q1 = round(quantile(exp_report$tH, .25),4),
+#             Avg = round(mean(exp_report$tH),4), 
+#             St_Dev = round(sd(exp_report$tH),4),
+#             Q3 = round(quantile(exp_report$tH, .75), 4),
+#             Max = round(max(exp_report$tH),4))
+# 
+# sum_table <- as.data.frame(rbind(sum_pA, sum_pB, sum_pD, sum_tJ, sum_tF, sum_tG, sum_tH))
+# rownames(sum_table) <- NULL
+# sum_table
+# 
+# kable(sum_table) %>% 
+#   kable_styling(latex_options = "striped") 
+```
+
+### **Logel Plots**
+```{r}
+sim9 <- logel_plot(basedir, filedir, 24, 401, 1200) + ggtitle("Sim 24")
+sim1 <- logel_plot(basedir, filedir, 35, 220, 1200) +  ggtitle("Sim 35")
+sim15 <- logel_plot(basedir, filedir, 8, 108, 1200) + ggtitle("Sim 8")
+sim12 <- logel_plot(basedir, filedir, 22, 423, 1200) + ggtitle("Sim 22")
+
+plot_grid(sim9, sim1, sim15, sim12, nrow = 2, ncol = 2)
+```
+
+### **Compare fitness to decompressed**
+```{r}
+# new_dir <- "/stor/work/Wilke/tingle/phix174/src/python/pycharm/3252022/sim"
+# 
+# compare_fitness<- all_sims_report %>% 
+#   filter(sim %in% c(24, 35, 8, 22, 50, 27, 19, 36, 49, 21)) %>% 
+#   mutate(decomp_virions = get_fitness(paste0(new_dir, sim, ".tsv"), 1200)) %>% 
+#   select(sim, gen, min_error, virions, decomp_virions)
+# 
+# kable(compare_fitness) %>% 
+#   kable_styling(latex_options = "striped") %>% 
+#   row_spec(c(1,8), background = "#D1F5AB")
+```
+
+
+
+
+```{r}
+sim24_table <- read_tsv("/stor/work/Wilke/tingle/phix174/output/3242022/sim_24_gen_401.tsv")
+
+
+
+pt_run <- as.data.frame(sim24_table) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == 1200) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    #filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -time) 
+    #mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    #mutate(stoich = protein/copies) %>%
+    #summarise(virions = min(stoich))
+```
+
+

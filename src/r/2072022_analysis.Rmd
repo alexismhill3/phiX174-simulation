@@ -1,11 +1,11 @@
 ---
-title: "1262022_analysis"
+title: "2072022_analysis"
 author: "Tanvi Ingle"
-date: "1/27/2022"
-output:
-  html_document: default
-  pdf_document: default
+date: "2/7/2022"
+output: html_document
 ---
+## **READ THIS**
+This analysis resuses the first phix174_optimization_1; ie the algorithm that still sets the first generation error to e^10 AND declares and error as -1 if not all 11 genes are expressed. **Thus, this analysis is incomplete.**
 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 require(ggplot2)
@@ -15,20 +15,19 @@ require(scales)
 require(kableExtra)
 ```
 
-
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
-basedir <- "/stor/work/Wilke/tingle/phix174/output/1262022/"
+basedir <- "/stor/work/Wilke/tingle/phix174/output/2072022/"
 
 # get_reports() retrieves the reports for all the simulation runs in a specified scenario
 # had hardcoded case for Scenario B where there is no simulation 1
 get_reports <- function(basedir, filedir, total_sims){
   report <- data.frame()
-  if(filedir == "scenario_B/") {
-    i = 2
-  }
-  else 
-  i = 1
+  #if(filedir == "scenario_B/") {
+  #  i = 2
+  #}
+  #else
+    i = 1
   while (i<=total_sims) {
     sim = read_csv(paste0(basedir, filedir, "sim_", i, "_report.csv")) 
     sim$sim = i
@@ -114,7 +113,7 @@ logel_timeseries <- function(basedir, filedir, sim, gen, timestamp) {
 
 
 ### **Objective**
-Here I will analyze the results from the promoter optimization run on 1-26-2022. For this optimization attempt, I ran 5 scenarios with unique distributions for promoters A, B, and D. Each scenario was simmulated 10 times. Each simulation was run for 300 generations. 
+Here I will analyze the results from the promoter optimization run on 2-7-2022. For this optimization attempt, I ran 5 scenarios with unique distributions for promoters A, B, and D. Each scenario was simmulated 10 times. Each simulation was run for 300 generations. 
 
 Here are the details of each run. Each value represents the exponent on *e*, ie if uA = 11, then the mean strength of promoter A is e^11.
 
@@ -147,6 +146,8 @@ For Scenario A, I want to explore the parameter space (ie promoter strengths) be
 filedir <- "scenario_A/"
 scenario_A <- plot_reports(basedir, filedir, 10, "Figure 1: Scenario A")
 scenario_A
+
+min(sim_5_report$error)
 ```
 
 #### **What do the distributions look like for the lowest error simulations?**
@@ -202,48 +203,6 @@ sim7_time <- logel_timeseries(basedir, filedir, 7, 300, 1200)
 plot_grid(sim3_time, sim4_time, sim7_time, nrow = 3)
 ```
 
-
-Here is how the promoter values change over time 
-```{r}
-scenario_A_report %>% 
-  filter(sim %in% c(3,4,7)) %>% 
-  ggplot(aes(x = gen)) +
-  facet_wrap(. ~ sim, scales="free_y") +
-  geom_line(aes(y = pA)) + 
-  scale_y_continuous(trans = log10_trans(),
-    breaks = trans_breaks("log10", function(x) 10^x),
-    labels = trans_format("log10", math_format(10^.x))) +
-  cowplot::theme_minimal_grid(12)
-
-scenario_A_report %>% 
-  filter(sim %in% c(3,4,7)) %>% 
-  ggplot(aes(x = gen)) +
-  facet_wrap(. ~ sim, scales="free_y") +
-  scale_y_continuous(trans = log10_trans(),
-    breaks = trans_breaks("log10", function(x) 10^x),
-    labels = trans_format("log10", math_format(10^.x))) +
-  geom_line(aes(y = pB)) + 
-  cowplot::theme_minimal_grid(12)
-
-
-scenario_A_report %>% 
-  filter(sim %in% c(3,4,7)) %>% 
-  ggplot(aes(x = gen)) +
-  facet_wrap(. ~ sim, scales="free_y") +
-  geom_line(aes(y = pD)) + 
-  scale_y_continuous(trans = log10_trans(),
-    breaks = trans_breaks("log10", function(x) 10^x),
-    labels = trans_format("log10", math_format(10^.x))) +
-  cowplot::theme_minimal_grid(12)
-  
-  # geom_line(aes(y = pB)) + 
-  # geom_line(aes(y = pD))
-```
-
-
-
-
-
 ### **Dive into Scenario B**
 #### **What do the reports for each simulation look like?** 
 
@@ -257,8 +216,8 @@ For Scenario B, I want to explore the parameter space (ie promoter strengths) be
 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 filedir <- "scenario_B/"
-scenario_B <- plot_reports(basedir, filedir, 10, "Figure 2: Scenario B")
-scenario_B
+#scenario_B <- plot_reports(basedir, filedir, 10, "Figure 2: Scenario B")
+#scenario_B
 ```
 
 #### **What do the distributions look like for the lowest error simulations?**
@@ -268,13 +227,13 @@ For Scenario B, simulations 2, 4, 5, 6, 9, and 10 have the lowest errors at the 
 > Scenario B - Associated Errors for the best simulations
 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
-scenario_B_report <- get_reports(basedir, filedir, 10) %>% 
-  filter(!is.na(gen)) %>% 
-  filter(sim %in% c(2, 4, 5, 6, 9, 10)) %>% 
-  filter(gen == 300) 
+#scenario_B_report <- get_reports(basedir, filedir, 10) %>% 
+ # filter(!is.na(gen)) %>% 
+  #filter(sim %in% c(2, 5, 6, 9, 10)) %>% 
+  #filter(gen == 300) 
 
-kable(scenario_B_report) %>% 
-   kable_styling(latex_options = "striped")
+#kable(scenario_B_report) %>% 
+   #kable_styling(latex_options = "striped")
 ```
 
 For Scenario B, the none of the distributions look particularly good -- sim 6 looks the best because it captures the step between genes BKC and DEJ. Also, sims 4 and 9 still reported a low error but are missing gene expressions. 
@@ -285,9 +244,9 @@ For Scenario B, the none of the distributions look particularly good -- sim 6 lo
 sim2 <- logel_plot(basedir, filedir, 2, 300, 1200) + 
   ggtitle("sim 2")
 
-sim4 <- logel_plot(basedir, filedir, 4, 300, 1200) +
-  theme(axis.title.y = element_blank()) +
-  ggtitle("sim 4")
+#sim4 <- logel_plot(basedir, filedir, 4, 300, 1200) +
+#  theme(axis.title.y = element_blank()) +
+ # ggtitle("sim 4")
   
 sim5 <- logel_plot(basedir, filedir, 5, 300, 1200) +
   theme(axis.title.y = element_blank()) +
@@ -305,7 +264,7 @@ sim10 <- logel_plot(basedir, filedir, 10, 300, 1200) +
   theme(axis.title.y = element_blank()) + 
   ggtitle("sim 10")
 
-scenario_B_best <- plot_grid(sim2, sim4, sim5, sim6, sim9, sim10, ncol = 3)
+scenario_B_best <- plot_grid(sim2, sim5, sim6, sim9, sim10, ncol = 3)
 remove(sim2, sim4, sim5, sim6, sim9, sim10)
 
 scenario_B_best
@@ -317,13 +276,13 @@ Here is how the sims 2, 4, 5, 6, 9, and 10 change over time (gen 1, gen 150, gen
 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 sim2_time <- logel_timeseries(basedir, filedir, 3, 300, 1200)
-sim4_time <- logel_timeseries(basedir, filedir, 4, 300, 1200)
+#sim4_time <- logel_timeseries(basedir, filedir, 4, 300, 1200)
 sim5_time <- logel_timeseries(basedir, filedir, 5, 300, 1200)
 sim6_time <- logel_timeseries(basedir, filedir, 6, 300, 1200)
 sim9_time <- logel_timeseries(basedir, filedir, 9, 300, 1200)
 sim10_time <- logel_timeseries(basedir, filedir, 10, 300, 1200)
 
-plot_grid(sim2_time, sim4_time, sim5_time, nrow = 3)
+plot_grid(sim2_time, sim5_time, nrow = 2)
 plot_grid(sim6_time, sim9_time, sim10_time, nrow = 3) 
 ```
 
