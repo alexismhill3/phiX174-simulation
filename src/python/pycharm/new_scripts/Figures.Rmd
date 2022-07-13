@@ -33,7 +33,6 @@ filedir <- paste0(basedir, "output/")
 figuredir <- paste0(basedir, "figures/")
 ```
 
-
 ### **Functions**
 
 #### `get_reports()`: 

@@ -1,24 +1,28 @@
 Things to clean up in phix174_opt_12.py script:
 
-1. Update location of genomic_coords.
-  b) In next implementation (once circular genome is available) will need to update this coords file OR pull directly from the original ENSEMBLE file
+1. Update README - describe how everything required to run simulations & optimizations are in Wilke/tingle/phix174/src/python/pycharm/new_scripts
 
-2. Discuss how to specify pinetree simulation output directory in the README file.
+2. Write bash file to generate jobs.txt file
 
-4. Update get_error() function, ie how RMSE is calculated.
-  a) Claus' feedback with setting gA expression levels --> 1000 transcripts & fitting accordingly.
+3. Tidy simulation code for decompressed genome. 
 
-7. Write bash file to generate jobs.txt file
+4. Write script to generate decompressed_genomic_coords.csv - make this distinction cleaner
 
 COMPLETED:
 
 1. Update location of genomic_coords.
     a) Move into ...pycharm/6032022 --> created variable called 'genomic_coords_path'; add this to the main function call & pinetree call
 
-3. Remove unnecessary print statements littered throughout the code
+2. Remove unnecessary print statements littered throughout the code
 
-5. Make number of generations also a parameter (ie don't hardcode 500)
+3. Make number of generations also a parameter (ie don't hardcode 500)
 
-6. Fix scaling the promoter values (simplify so ~N(1, 0.1)). Currently, code looks as shown in a) and b)
+4. Fix scaling the promoter values (simplify so ~N(1, 0.1)). Currently, code looks as shown in a) and b)
   a) step = np.random.normal(0, 0.1, 1)[0]
   b) pA = pA * (step + 1)
+
+5. Update get_error() function, ie how RMSE is calculated.
+  a) Claus' feedback with setting gA expression levels --> 10 transcripts & fitting accordingly.
+
+6. Update location of genomic_coords.
+  b) In next implementation (once circular genome is available) will need to update this coords file OR pull directly from the original ENSEMBLE file
