@@ -7,14 +7,13 @@ import sys
 
 # STEP 2: RUN PINETREE FUNCTION
 def run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, genomic_coords_path, date):
-    print(gen, pA, pB, pD, tJ, tF, tG, tH)
     
-    # Create host cell & genome
-    CELL_VOLUME = 1.1e-15  # from T7
+    # STEP 2.1: Create E. Coli host cell and phage genome
+    CELL_VOLUME = 1.1e-15  
     model = pt.Model(cell_volume=CELL_VOLUME)
-    phage = pt.Genome(name="phix_174", length=5400)
+    phage = pt.Genome(name="phix_174", length=5400) # length is lengthened to increase space between gene H and terminator G
 
-    # Read genomic coordinates from csv into dataframe
+    # STEP 2.2: Read genomic coordinates from csv into a dataframe
     genomic_coords = pd.read_csv(base_dir + genomic_coords_path + "genomic_coords.csv")
     # Change locations of gene G, terminator G, and gene H to have more spacing between them
         # gH ends at 5390, starts at 4413
@@ -22,8 +21,9 @@ def run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, genomic_coords_path, date)
     genomic_coords.at[11, "new_start"] = 4413
     genomic_coords.at[11, "new_end"] = 5390
     
-    print(genomic_coords.at[0, "type"])
-
+    #print(genomic_coords.at[0, "type"])
+    
+    # STEP 2.3: Add genomic features from dataframe to the genome
     n = 0
     while (n < len(genomic_coords)):
 
@@ -51,23 +51,35 @@ def run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, genomic_coords_path, date)
                                start=genomic_coords.at[n, "new_start"],
                                stop=genomic_coords.at[n, "new_end"],
                                interactions={"ecolipol": np.exp(pD)})
-
+        
+        elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "H":
+            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+                               start=genomic_coords.at[n, "new_start"],
+                               stop=genomic_coords.at[n, "new_end"],
+                               efficiency={"ecolipol": tH})
+                               
+        elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "J":
+            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+                               start=genomic_coords.at[n, "new_start"],
+                               stop=genomic_coords.at[n, "new_end"],
+                               efficiency={"ecolipol": tJ})
+                               
+        elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "F":
+            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+                               start=genomic_coords.at[n, "new_start"],
+                               stop=genomic_coords.at[n, "new_end"],
+                               efficiency={"ecolipol": tF})
+                               
+        elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "G":
+            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+                               start=genomic_coords.at[n, "new_start"],
+                               stop=genomic_coords.at[n, "new_end"],
+                               efficiency={"ecolipol": tG})
+                               
         else:
             print(" ")
 
         n = n + 1
-
-    
-    # Add terminators manually (moved to intragenic regions, tH at start, and genome lengthend)
-    phage.add_terminator(name="terminator_J", start=2436, stop=2437,  
-                         efficiency={"ecolipol": tJ}) # After gene J
-    phage.add_terminator(name="terminator_F", start=3796, stop=3797,  
-                         efficiency={"ecolipol": tF})  # After gene F
-    phage.add_terminator(name="terminator_G", start=4400, stop=4401,
-                       efficiency={"ecolipol": tG}) # After gene G
-    phage.add_terminator(name="terminator_H", start=55, stop=56,
-                 efficiency={"ecolipol": tH})
-
 
     # Register genome after promoters/terminators are added
     model.register_genome(phage)
@@ -107,8 +119,13 @@ def get_error(file, gen):
             error = -1
             return (error)
         else:
-            sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
-            sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
+            # OLD ERROR CALC - RELATIVE ABUNDANCES
+            # sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
+            # sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
+            
+            # NEW ERROR CALC - RAW COUNTS
+            sim["norm"] = sim['transcript'] # / (sim.iloc[0]["transcript"])
+            sim["exp"] = [10, 10, 60, 60, 170, 170, 110, 50, 10, 170, 60] # scaled values based on output/4152022/sim_79_gen_468.tsv
             error = round(mean_squared_error(sim.exp, sim.norm, squared=False), 5)
             return (error)
 
@@ -118,12 +135,14 @@ def get_error(file, gen):
             return (error)
 
         else:
-            sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
-            sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
+            # sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
+            # sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
+            sim["norm"] = sim['transcript'] # / (sim.iloc[0]["transcript"])
+            sim["exp"] = [10, 10, 60, 60, 170, 170, 110, 50, 10, 170, 60] # scaled values based on output/4152022/sim_79_gen_468.tsv
             error = round(mean_squared_error(sim.exp, sim.norm, squared=False), 5)
             return (error)
 
-# STEP 4:
+# STEP 4: OPTIMIZE 
 def main(u, o, date, sim, base_dir, genomic_coords_path, total_gens):
     gen = 0
     pA = np.random.normal(u, o, 1)[0]

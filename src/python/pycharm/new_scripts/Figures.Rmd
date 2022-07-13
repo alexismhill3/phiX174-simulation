@@ -1,0 +1,307 @@
+---
+title: "Figures"
+author: "Tanvi Ingle"
+date: "7/13/2022"
+output: html_document
+---
+### **Objectives**
+This Rmd file contains code snippets that recreate figures found in my undergrad thesis. The original code to recreate the figures are found in Wilke/tingle/phix174/src/r/thesis_figures/Thesis_Figures.Rmd.  Important vocabulary include: 
+
+**simulation** = the optimization attempt (ie, 1 run of the phix174_opt_12.py script)
+**generation** = an attempt within a simulation run to decrease RMSE
+**timestamp** = timepoint in the infection cycle for PhiX174. 
+
+Essencially, each simulation run will have 500/1000 generations. Each generation is a run of the PhiX174 pinetree model for one infection cycle (as set by timestamp).
+
+#### **Set Libraries and Working Directories**
+Update file pathways. Defaults set to directores in the `tingle/` directory on the Wilke pods. 
+
+`basedir`: working directory
+`filedir`: folder in `basedir` that contains simulation outputs and reports
+`figuredir`: folder in `basedir` that contains saved figures created in this Rmd
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+library("docxtools")
+
+basedir <- "/stor/work/Wilke/tingle/phix174/src/python/pycharm/new_scripts/"
+filedir <- paste0(basedir, "output/")
+figuredir <- paste0(basedir, "figures/")
+```
+
+
+### **Functions**
+
+#### `get_reports()`: 
+
+**FUNCTION** - returns a dataframe with all of the reports saved from each simulation run. Each report stores data on the trial number, calculated RMSE, and minimum overall RMSE values. 
+
+**ARGUMENTS** - basedir, filedir, and total_sims (the total number of simulations, or attempted optimizations, run)
+
+```{r}
+get_reports <- function(basedir, filedir, total_sims){
+  report <- data.frame()
+  i = 1
+  while (i<=total_sims) {
+    sim = read_csv(paste0(basedir, filedir, "sim_", i, "_report.csv")) 
+    sim$sim = i
+    report <- rbind(report, sim)
+    i <- i + 1
+  }
+  return(report)
+}
+```
+
+#### `plot_reports()`: 
+
+**FUNCTION** - creates a figure that plots all of the RMSE values & the lowest RMSE value, faceted for each simulation run. 
+
+**ARGUMENTS** - basedir, filedir, total_sims, start_sim (the first simulation run you want to include in the plot), end_sim (the last simulation run to include in the plot), title. 
+
+```{r}
+plot_reports <- function(basedir, filedir, total_sims, start_sim, end_sim, title){
+  x_scale <- c(0, 100, 200, 300, 400, 500)
+  y_scale <- c(0, 3, 6, 9, 12)
+  mycolors <- c("black", "#CC79A7")
+  
+  figure <- get_reports(basedir, filedir, total_sims) %>% 
+    filter(sim %in% c(start_sim : end_sim)) %>% 
+    filter(!is.na(gen)) %>% 
+    filter(gen > 0) %>% 
+    filter(error <= 12) %>% 
+    ggplot(aes(x = gen)) +
+    # geom_line(aes(y = error, color = "error"), color = "#CC79A7") + 
+    # geom_line(aes(y = min_error, color = "min_error"), color = "black") +
+    geom_line(aes(y = error, color = "RMSE")) +
+    geom_line(aes(y = min_error, color = "Lowest RMSE")) +
+    labs(colour="") +
+    facet_wrap(~sim) + 
+    ggtitle(title) + 
+    xlab("Generations") +
+    ylab("RMSE") + 
+    scale_y_continuous(breaks = y_scale) + 
+    scale_x_continuous(breaks = x_scale) + 
+    scale_color_manual(values = mycolors) + 
+    cowplot::theme_minimal_grid(12) + 
+    theme(axis.text.x = element_text(size=12, angle= -45))
+  
+  return(figure)
+}
+```
+
+#### `logel_plot()`: 
+
+**FUNCTION** - creates a figure similar to the one in Logel 2020 which plots the transcript abundances for each of the PhiX-174 genes relative to the expression levels of gene A. 
+
+**ARGUMENTS** - basedir, filedir, sim (the specific simulation number to be plotted), gen (the generation, ie optimization attempt in a single simulation run, to be plotted), timestamp (the timepoint in the simulation run to be plotted. generally this is at the end of the infection cycle, so 1200).
+
+**WARNING** - the colors do NOT exactly match the figure in Logel 2020. @TODO need to fix this. 
+
+*Commented out y_scales in logel(); uncomment this before running the timeseries plot.*
+
+```{r}
+logel_plot <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_y_continuous() + 
+       # scale_y_continuous(limits = c(0, 19),
+       #                    breaks = c(0,3,6,9,12,15,18)) +
+       ylab("")+
+       xlab("ΦX174 genes") + 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+```
+
+#### `rmse_curves()`: 
+
+**FUNCTION** - plots the RMSE and minimum RMSE curves for 1 simulation. 
+
+**ARGUMENTS** - basedir, filedir, sim, timestamp. 
+
+**WARNING** - RMSE values greater than 12 are exclused from the plot.  
+
+```{r}
+rmse_curves <- function(basedir, filedir, sim, timestamp){
+ 
+  x_scale <- c(0, 100, 200, 300, 400, 500)
+  y_scale <- c(0, 3, 6, 9, 12)
+  mycolors <- c("black", "#CC79A7")
+  
+  figure <- read_csv(paste0(basedir, "sim_", sim, "_report.csv")) %>% 
+            filter(!is.na(gen)) %>% 
+            filter(gen > 0) %>% 
+            filter(error <= 12) %>% 
+            ggplot(aes(x = gen)) +
+            geom_line(aes(y = error, color = "RMSE")) +
+            geom_line(aes(y = min_error, color = "Lowest RMSE")) +
+            labs(colour="") +
+            ggtitle(paste0("Trial ", sim)) + 
+            xlab("Generation") +
+            ylab("RMSE") + 
+            scale_y_continuous(breaks = y_scale) + 
+            scale_x_continuous(breaks = x_scale) + 
+            scale_color_manual(values = mycolors) + 
+            cowplot::theme_minimal_grid(12) + 
+            theme(axis.text.x = element_text(size=12, angle= -45),
+                  plot.title = element_text(hjust = 0.5))
+  
+  return(figure)
+ }
+```
+
+####  `logel_timeseries()`" 
+
+**FUNCTION** - creates a 4 column, 1 row plot of transcript abundances for 1 simulation and three different generations (ex Simulation 10, generations 1, 250, and 500). The first column in the plot is the experimental qPCR relative abundances, described in Logel 2020. Plots in columns 2, 3, and 4 correspond to first, second, and third generations (respectively) specified by the user. The purpose of this plot is to showcase that as RMSE values drop, the overall transcript abundance pattern evolves to be closer to qPCR data. 
+
+**ARGUMENTS** - basedir, filedir, sim, gen1, gen2, gen3 (each gen reflects 3 different genreation timepoints), timestamp (point in the infection cycle, typically 1200).
+
+```{r}
+logel_timeseries <- function(basedir, filedir, sim, gen1, gen2, gen3, timestamp) {
+  
+ 
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+  
+  sim_qpcr <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                        normalized = c(1,1,6,6,6,17,17,17,11,5,1)) %>% 
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 18), 
+            breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("qPCR Data") + 
+            ylab("Transcript Abundances")+ 
+            xlab("ΦX174 genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  
+  sim_start <- logel_plot(basedir, filedir, sim, gen = gen1, timestamp = 1200) + 
+               ggtitle(paste0("Generation ", gen1)) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  sim_middle <- logel_plot(basedir, filedir, sim, gen = gen2, timestamp = 1200) + 
+                ggtitle(paste0("Generation ", gen2)) +
+                theme(plot.title = element_text(hjust = 0.5))
+  sim_end <- logel_plot(basedir, filedir, sim, gen = gen3, timestamp = 1200) + 
+               ggtitle(paste0("Generation ", gen3)) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  
+  title <- ggdraw() + draw_label(paste0("Trial ", sim, ": Simulated Transcription Patterns"), fontface='bold')
+  
+  panels <- cowplot::plot_grid(sim_qpcr, sim_start, sim_middle, sim_end,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      labels = c("A", "B", "", ""), 
+                      ncol = 4, nrow = 1)
+  
+  figure <- plot_grid(title, panels, ncol=1, rel_heights=c(0.1, 1)) 
+               
+  return(figure)
+}
+```
+
+#### `get_fitness()`: 
+
+**FUNCTION** - calculate the total number of virions that could be assembled given the protein abundances found in a pinetree run (file = sim_#_gen_#.tsv, timepoint = 1200). The stoichiometric relationship between protein abundances is found in Leuven 2020. 
+
+**ARGUMENTS** - basedir, filedir, sim, gen, timestamp. 
+```{r}
+get_fitness <- function(basedir, filedir, sim, gen, timestamp){
+  
+  file <- paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv")
+  
+  pt_run <- as.data.frame(read_tsv(file)) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == timestamp) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    mutate(stoich = protein/copies) %>%
+    summarise(virions = min(stoich))
+  
+  return(pt_run$virions[1])
+}
+```
+
+#### `absolute_logel()`: 
+
+**FUNCTION** - plot the total transcript raw counts for a specific simulation and generation (NOT relative to gene A expression levels). 
+
+**ARGUMENTS** - basedir, filedir, sim, gen, timestamp. 
+```{r}
+absolute_logel <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       #mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=transcript, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_y_continuous() + 
+       # scale_y_continuous(limits = c(0, 19),
+       #                    breaks = c(0,3,6,9,12,15,18)) +
+       ylab("")+
+       xlab("ΦX174 genes") + 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+```
+
+
+
+
+
