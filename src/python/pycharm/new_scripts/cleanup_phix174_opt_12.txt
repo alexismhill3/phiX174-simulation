@@ -8,6 +8,13 @@ Things to clean up in phix174_opt_12.py script:
 
 4. Write script to generate decompressed_genomic_coords.csv - make this distinction cleaner
 
+5. Make decompressed scripts
+6. Make decompressed genome files
+7. Make decompressed jobs file generator
+8. Make parallel.sh scripts for dc
+9. Fix genomic coords fro both write_jobs_wt and main script and in the output files. 
+10. Rename files so all wt and dc are grouped togethe
+
 COMPLETED:
 
 1. Update location of genomic_coords.
