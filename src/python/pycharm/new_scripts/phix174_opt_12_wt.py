@@ -1,3 +1,14 @@
+# OBJECTIVE: This python script XXX
+# ARGUMENTS: Described below. 
+# OUTPUT: 
+# WARNINGS/QUIRKS: 
+## 1) @TODO: make genomic_coords_path the full path including the file name...
+## 2) 
+## 3) 
+#----------------------------------------------------------------------------------------------------------------#
+
+
+
 # STEP 1: IMPORT PACKAGES
 import pandas as pd
 import numpy as np
@@ -53,25 +64,25 @@ def run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, genomic_coords_path, date)
                                interactions={"ecolipol": np.exp(pD)})
         
         elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "H":
-            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+            phage.add_terminator(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
                                start=genomic_coords.at[n, "new_start"],
                                stop=genomic_coords.at[n, "new_end"],
                                efficiency={"ecolipol": tH})
                                
         elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "J":
-            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+            phage.add_terminator(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
                                start=genomic_coords.at[n, "new_start"],
                                stop=genomic_coords.at[n, "new_end"],
                                efficiency={"ecolipol": tJ})
                                
         elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "F":
-            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+            phage.add_terminator(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
                                start=genomic_coords.at[n, "new_start"],
                                stop=genomic_coords.at[n, "new_end"],
                                efficiency={"ecolipol": tF})
                                
         elif genomic_coords.at[n, "type"] == "terminator" and genomic_coords.at[n, "name"] == "G":
-            phage.add_promoter(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
+            phage.add_terminator(name=genomic_coords.at[n, "type"] + "_" + genomic_coords.at[n, "name"],
                                start=genomic_coords.at[n, "new_start"],
                                stop=genomic_coords.at[n, "new_end"],
                                efficiency={"ecolipol": tG})
