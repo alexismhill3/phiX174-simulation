@@ -11,7 +11,20 @@ This Rmd file contains code snippets that recreate figures found in my undergrad
 **generation** = an attempt within a simulation run to decrease RMSE
 **timestamp** = timepoint in the infection cycle for PhiX174. 
 
-Essencially, each simulation run will have 500/1000 generations. Each generation is a run of the PhiX174 pinetree model for one infection cycle (as set by timestamp). 
+Essentially, each simulation run will have 500/1000 generations. Each generation is a run of the PhiX174 pinetree model for one infection cycle (as set by timestamp).
+
+Directory of Each Figure from UG thesis:
+1. **Figure 1 & 2** were created in powerpoint. It was repurposed from Wright et. al.; not sure if this will have to be redone in a new format to avoid copyright issues. 
+
+2. **Figure 3** from 
+
+3. **Figure 4** from  `logel_timeseries()`
+
+4. **Figure 5** from `compare_wt_dc_transcripts_plot()`
+
+5. **Figure 6** from 
+
+6. **Figure 7** from 
 
 #### **Set Libraries and Working Directories**
 Update file pathways. Defaults set to directores in the `tingle/` directory on the Wilke pods. 
@@ -29,7 +42,7 @@ require(kableExtra)
 library("docxtools")
 
 basedir <- "/stor/work/Wilke/tingle/phix174/src/python/pycharm/new_scripts/"
-filedir <- paste0(basedir, "output/")
+filedir <- "output/"
 figuredir <- paste0(basedir, "figures/")
 ```
 
@@ -54,7 +67,6 @@ get_reports <- function(basedir, filedir, total_sims){
   return(report)
 }
 ```
-
 
 
 #### `plot_reports()`: 
@@ -178,8 +190,7 @@ rmse_curves <- function(basedir, filedir, sim, timestamp){
  }
 ```
 
-
-####  `logel_timeseries()`" 
+####  `logel_timeseries()`
 
 **FUNCTION** - creates a 4 column, 1 row plot of transcript abundances for 1 simulation and three different generations (ex Simulation 10, generations 1, 250, and 500). The first column in the plot is the experimental qPCR relative abundances, described in Logel 2020. Plots in columns 2, 3, and 4 correspond to first, second, and third generations (respectively) specified by the user. The purpose of this plot is to showcase that as RMSE values drop, the overall transcript abundance pattern evolves to be closer to qPCR data. 
 
@@ -310,266 +321,277 @@ absolute_logel <- function(basedir, filedir, sim, gen, timestamp){
 
 
 
+
 ### **Other Code Snippets**
-These are snippets borrowed from the code I used to make the figures in my thesis. I did not write pretty wrapper functions to create these...
 
-The file paths for the output files should be redirected to: Wilke/tingle/phix174/output/4152022. The most relevant snippet is probably the Fitness Bar Plots. 
+#### **IMPORTANT TO READ** 
 
+DON'T hit run on these code blocks before reading the following descriptions -- they require some finagling before they will produce the figures you want. These are snippets borrowed from the code I used to make the figures in my thesis. I did not write pretty wrapper functions for these since I wanted to provide some flexbility with the stylizing (ie I got a wee bit lazy. As my penance, I have included descriptions of how to get these blocks to run & how to customize it with the latest output data). You will notice a lot of redundancy ... but I think it's a small price to pay for improved readability. 
 
+#### **STEP 1** If you want to see the figures that these code blocks produce, uncomment the following code. This will redirect the basedir and filedir to output produced for my thesis. 
 
-**Relative transcript abundances**
+`basedir` <- filepath to 4/15/2022 simulation output files. Has all the .tsv files produced during the optimization script
+`filedir` <- filepath to folder within 4/15/2022 which has runs for the decompressed genome. 
+
 ```{r}
-wt_79_data <- read_tsv(paste0(basedir, "","sim_", 79, "_gen_", 468, ".tsv" )) %>% 
-              mutate(time = round(time)) %>% 
-              filter(time == 1200) %>% 
-              filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
-              mutate(normalized = transcript/transcript[1]) %>% 
-              mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
-                                               "gene_K", "gene_C", "gene_D",
-                                               "gene_E", "gene_J", "gene_F",
-                                               "gene_G", "gene_H"),
-                                             c("A", "A*", "B", "K",
-                                               "C", "D", "E", "J",
-                                               "F", "G", "H"))) %>% 
-              mutate(type = "Trial 79") %>% 
-              select(species, normalized, type) %>% 
-              mutate(genome = "Wildtype ΦX174")
-
-wt_94_data <- read_tsv(paste0(basedir, "","sim_", 94, "_gen_", 202, ".tsv" )) %>% 
-              mutate(time = round(time)) %>% 
-              filter(time == 1200) %>% 
-              filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
-              mutate(normalized = transcript/transcript[1]) %>% 
-              mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
-                                               "gene_K", "gene_C", "gene_D",
-                                               "gene_E", "gene_J", "gene_F",
-                                               "gene_G", "gene_H"),
-                                             c("A", "A*", "B", "K",
-                                               "C", "D", "E", "J",
-                                               "F", "G", "H")))  %>% 
-              mutate(type = "Trial 94") %>% 
-              select(species, normalized, type) %>% 
-              mutate(genome = "Wildtype ΦX174")
-
-wt_10_data <- read_tsv(paste0(basedir, "","sim_", 10, "_gen_", 233, ".tsv" )) %>% 
-              mutate(time = round(time)) %>% 
-              filter(time == 1200) %>% 
-              filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
-              mutate(normalized = transcript/transcript[1]) %>% 
-              mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
-                                               "gene_K", "gene_C", "gene_D",
-                                               "gene_E", "gene_J", "gene_F",
-                                               "gene_G", "gene_H"),
-                                             c("A", "A*", "B", "K",
-                                               "C", "D", "E", "J",
-                                               "F", "G", "H")))  %>% 
-              mutate(type = "Trial 10") %>% 
-              select(species, normalized, type) %>% 
-              mutate(genome = "Wildtype ΦX174")
-
-wt_exp_data <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
-                          normalized = c(1,1,6,6,6,17,17,17,11,5,1),
-                          type = rep("Experimental Data")) %>% 
-               mutate(species = factor(species, c("A", "A*", "B", "K",
-                                           "C", "D", "E", "J",
-                                           "F", "G", "H"),
-                                         c("A", "A*", "B", "K",
-                                           "C", "D", "E", "J",
-                                           "F", "G", "H"))) %>% 
-              mutate(genome = "Wildtype ΦX174")
-
-#wt_data <- rbind(wt_79_data, wt_94_data, wt_10_data, wt_exp_data)
-
-relative_wt <- wt_data %>% 
-              mutate(type = factor(type, c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"),
-                                           c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"))) %>% 
-              ggplot(aes(x = species, y = normalized, color = type, shape = type)) +
-              geom_point(size = 2.5) + 
-              #scale_fill_manual(values = my_palette) + 
-              scale_y_continuous(limits = c(0, 19),
-                                breaks = c(0,3,6,9,12,15,18)) +
-              labs(subtitle = "Wildtype ΦX174") +
-              ylab("Relative Transcript Abundances") +
-              xlab("ΦX174 genes") + 
-              scale_color_manual(values = c("#e37c71", "#808080", "#BEBEBE","black")) +
-              cowplot::theme_minimal_hgrid(12) +
-              theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-                    axis.text.x = element_text(size=12, family="Arial"),
-                    axis.text.y = element_text(size=12, family="Arial"),
-                    axis.title = element_text(size=12, family="Arial"),
-                    strip.text.x = element_text(size = 12,  family="Arial"),
-                    legend.title = element_blank(),
-                    legend.position="none") 
-
-dc_79_data <- read_tsv(paste0(basedir,filedir,"sim_", 79, "_gen_", 468, ".tsv" )) %>% 
-              mutate(time = round(time)) %>% 
-              filter(time == 1200) %>% 
-              filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
-              mutate(normalized = transcript/transcript[1]) %>% 
-              mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
-                                               "gene_K", "gene_C", "gene_D",
-                                               "gene_E", "gene_J", "gene_F",
-                                               "gene_G", "gene_H"),
-                                             c("A", "A*", "B", "K",
-                                               "C", "D", "E", "J",
-                                               "F", "G", "H"))) %>% 
-              mutate(type = "Trial 79") %>% 
-              select(species, normalized, type) %>% 
-              mutate(genome = "Decompressed ΦX174")
-
-dc_94_data <- read_tsv(paste0(basedir, filedir,"sim_", 94, "_gen_", 202, ".tsv" )) %>% 
-              mutate(time = round(time)) %>% 
-              filter(time == 1200) %>% 
-              filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
-              mutate(normalized = transcript/transcript[1]) %>% 
-              mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
-                                               "gene_K", "gene_C", "gene_D",
-                                               "gene_E", "gene_J", "gene_F",
-                                               "gene_G", "gene_H"),
-                                             c("A", "A*", "B", "K",
-                                               "C", "D", "E", "J",
-                                               "F", "G", "H")))  %>% 
-              mutate(type = "Trial 94") %>% 
-              select(species, normalized, type) %>% 
-              mutate(genome = "Decompressed ΦX174")
-
-dc_10_data <- read_tsv(paste0(basedir, filedir,"sim_", 10, "_gen_", 233, ".tsv" )) %>% 
-              mutate(time = round(time)) %>% 
-              filter(time == 1200) %>% 
-              filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
-              mutate(normalized = transcript/transcript[1]) %>% 
-              mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
-                                               "gene_K", "gene_C", "gene_D",
-                                               "gene_E", "gene_J", "gene_F",
-                                               "gene_G", "gene_H"),
-                                             c("A", "A*", "B", "K",
-                                               "C", "D", "E", "J",
-                                               "F", "G", "H")))  %>% 
-              mutate(type = "Trial 10") %>% 
-              select(species, normalized, type) %>% 
-              mutate(genome = "Decompressed ΦX174")
-
-dc_exp_data <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
-                          normalized = c(1,1,6,6,6,17,17,17,11,5,1),
-                          type = rep("Experimental Data")) %>% 
-               mutate(species = factor(species, c("A", "A*", "B", "K",
-                                           "C", "D", "E", "J",
-                                           "F", "G", "H"),
-                                         c("A", "A*", "B", "K",
-                                           "C", "D", "E", "J",
-                                           "F", "G", "H"))) %>% 
-              mutate(genome = "Decompressed ΦX174")
-
-dc_data <- rbind(dc_79_data, dc_94_data, dc_10_data, dc_exp_data) 
-
-all_relative_data <- rbind(wt_79_data, wt_94_data, wt_10_data, wt_exp_data, dc_79_data, dc_94_data, dc_10_data, dc_exp_data)
-
-relative_dc <- dc_data %>% 
-              mutate(type = factor(type, c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"),
-                                           c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"))) %>% 
-              ggplot(aes(x = species, y = normalized, color = type, shape = type)) +
-              geom_point(size = 2.5) + 
-              #scale_fill_manual(values = my_palette) + 
-              scale_y_continuous(limits = c(0, 36),
-                                breaks = c(0,3,6,9,12,15,18,21,24,27,30,33)) +
-              labs(subtitle = "Decompressed ΦX174") +
-              ylab("") +
-              xlab("ΦX174 genes") + 
-              scale_color_manual(values = c("#e37c71", "#808080", "#BEBEBE","black")) +
-              cowplot::theme_minimal_hgrid(12) +
-              theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-                    axis.text.x = element_text(size=12, family="Arial"),
-                    axis.text.y = element_text(size=12, family="Arial"),
-                    axis.title = element_text(size=12, family="Arial"),
-                    strip.text.x = element_text(size = 12,  family="Arial"),
-                    legend.title = element_blank())
-# relative_legend <- get_legend(relative_dc)
-# relative_dc <- relative_dc + theme(legend.position = "none")
-# plot_grid(relative_wt, relative_dc, relative_legend, rel_widths = c(1,1,0.5), ncol= 3)
-
-
-all_relative_data %>% 
-  mutate(type = factor(type, c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"),
-                                           c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"))) %>% 
-  mutate(genome = factor(genome, c("Wildtype ΦX174", "Decompressed ΦX174"),
-                                           c("Wildtype ΦX174", "Decompressed ΦX174"))) %>% 
-  ggplot(aes(x = species, y = normalized, color = type, shape = type)) +
-  facet_wrap(~genome, scales = "free") +
-  geom_point(size = 2.5) + 
-  #scale_shape_manual(values = c(17, 15, 3)) +
-  #scale_fill_manual(values = my_palette) + 
-  # scale_y_continuous(limits = c(0, 19),
-  #                   breaks = c(0,3,6,9,12,15,18)) +
-  #labs(subtitle = "Decompressed ΦX174") +
-  ylab("Absolute Transcript Abundances") +
-  xlab("ΦX174 genes") + 
-  scale_color_manual(values = c("#e37c71","#808080", "#BEBEBE","black")) +
-  cowplot::theme_minimal_hgrid(12) +
-  theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-        axis.text.x = element_text(size=12, family="Arial"),
-        axis.text.y = element_text(size=12, family="Arial"),
-        axis.title = element_text(size=12, family="Arial"),
-        strip.text.x = element_text(size = 12,  family="Arial"),
-        legend.title = element_blank()) 
+# basedir <- "/stor/work/Wilke/tingle/phix174/output/4152022/"
+#  filedir <- "decompressed_runs/" 
 ```
+
+#### **STEP 2** 
+This script 
+
+##### `best_wt_runs_data()`: 
+
+**FUNCTION** - returns a dataframe. Contains 1) all of the wildtype simulation runs at timepoint 1200, with transcript abundances normalized expression of gene A 2) It has the experimentally-derived, normalized transcript abundances described in Logel 2020 (1:6:17...etc)
+
+**ARGUMENTS** - basedir, best_wt_sims (the simulation numbers you want to plot), best_wt_gens (the generation number within each simulation that you want to plot). 
+
+**EXAMPLE** - Uses the same `basedir` in the code block underneath **STEP 1**. Also the best_wt_sims and best_wt_gens refer to results from the 4/15/2022 runs used in my thesis. This code is commented out. 
+
+```{r}
+best_wt_runs_data <- function(best_wt_sims, best_wt_gens, basedir, filedir){
+  
+  i = 1
+  wt_data <- data.frame()
+  while(i <= length(best_wt_sims)){
+    
+    get_data <- read_tsv(paste0(basedir, filedir,"sim_", best_wt_sims[i], "_gen_", best_wt_gens[i], ".tsv" )) %>% 
+                mutate(time = round(time)) %>% 
+                filter(time == 1200) %>% 
+                filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+                mutate(normalized = transcript/transcript[1]) %>% 
+                mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                                 "gene_K", "gene_C", "gene_D",
+                                                 "gene_E", "gene_J", "gene_F",
+                                                 "gene_G", "gene_H"),
+                                               c("A", "A*", "B", "K",
+                                                 "C", "D", "E", "J",
+                                                 "F", "G", "H"))) %>% 
+                mutate(type = paste0("Trial ", best_wt_sims[i])) %>% 
+                select(species, normalized, type) %>% 
+                mutate(genome = "Wildtype ΦX174")
+    
+    wt_data <- rbind(wt_data, get_data)
+    i = i + 1
+  }
+  
+  wt_experimental_data <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                          normalized = c(1,1,6,6,6,17,17,17,11,5,1),
+                          type = rep("Experimental Data")) %>% 
+                          mutate(species = factor(species, c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"),
+                                            c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+                          mutate(genome = "Wildtype ΦX174")
+  
+  wt_data <- rbind(wt_data, wt_experimental_data)
+  
+  return(wt_data)
+}
+
+basedir <- "/stor/work/Wilke/tingle/phix174/output/4152022/"
+filedir <- ""
+best_wt_sims <- c(79, 94, 10)
+best_wt_gens <- c(468, 202, 233)
+my_wt_runs_data <- best_wt_runs_data(best_wt_sims, best_wt_gens, basedir, filedir)
+```
+
+##### `best_wt_runs_plot()`: 
+
+**FUNCTION** - Uses a dataframe outputted from `best_wt_runs_data()` to plot the relative abundances of each wildtype gene. This specific figure was not used in my thesis, but a version of it was used to create another figure. 
+
+**ARGUMENTS** - wt_data is the output from `best_wt_runs_data()`. *YOU WILL NEED TO MANUALLY EDIT THE FACTOR NAMES TO CORRESPOND TO THE SIMS/GENS YOU WANT!!*
+
+**EXAMPLE** - Code is commented out. Calls dataframe created in the example for `best_wt_runs_dat()`. 
+
+```{r}
+best_wt_runs_plot <- function(wt_data){
+  wt_fig <- wt_data %>% 
+            # EDIT THE FACTOR NAMES BELOW TO MATCH THE SIMS/GENS YOU WANT
+            mutate(type = factor(type, c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"),
+                                         c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"))) %>% 
+            ggplot(aes(x = species, y = normalized, color = type, shape = type)) +
+            geom_point(size = 2.5) + 
+            scale_y_continuous(limits = c(0, 19),
+                              breaks = c(0,3,6,9,12,15,18)) +
+            labs(subtitle = "Wildtype ΦX174") +
+            ylab("Relative Transcript Abundances") +
+            xlab("ΦX174 genes") + 
+            scale_color_manual(values = c("#e37c71", "#808080", "#BEBEBE","black")) +
+            cowplot::theme_minimal_hgrid(12) +
+            theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
+                  axis.text.x = element_text(size=12, family="Arial"),
+                  axis.text.y = element_text(size=12, family="Arial"),
+                  axis.title = element_text(size=12, family="Arial"),
+                  strip.text.x = element_text(size = 12,  family="Arial"),
+                  legend.title = element_blank()) 
+  
+  return(wt_fig)
+}
+
+best_wt_runs_plot(my_wt_runs_data)
+```
+
+
+##### `best_dc_runs_data()`
+**FUNCTION** - returns a dataframe. Contains 1) all of the decompressed simulation runs at timepoint 1200, with transcript abundances normalized expression of gene A 2) It has the experimentally-derived, normalized transcript abundances for the WILDTYPE described in Logel 2020 (1:6:17...etc)
+
+**ARGUMENTS** - basedir, decomp_filedir (path to decompressed runs), best_dc_sims (the simulation numbers you want to plot), best_dc_gens (the generation number within each simulation that you want to plot). 
+
+**EXAMPLE** - Uses the same `basedir` in the code block underneath **STEP 1**. Also the best_dc_sims and best_dc_gens refer to results from the 4/15/2022 runs used in my thesis. This code is commented out. 
+```{r}
+best_dc_runs_data <- function(best_dc_sims, best_dc_gens, basedir, decomp_filedir){
+  
+  i = 1
+  dc_data <- data.frame()
+  while(i <= length(best_dc_sims)){
+    
+    get_data <- read_tsv(paste0(basedir, decomp_filedir,"sim_", best_dc_sims[i], "_gen_", best_dc_gens[i], ".tsv" )) %>% 
+                mutate(time = round(time)) %>% 
+                filter(time == 1200) %>% 
+                filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+                mutate(normalized = transcript/transcript[1]) %>% 
+                mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                                 "gene_K", "gene_C", "gene_D",
+                                                 "gene_E", "gene_J", "gene_F",
+                                                 "gene_G", "gene_H"),
+                                               c("A", "A*", "B", "K",
+                                                 "C", "D", "E", "J",
+                                                 "F", "G", "H"))) %>% 
+                mutate(type = paste0("Trial ", best_dc_sims[i])) %>% 
+                select(species, normalized, type) %>% 
+                mutate(genome = "Decompressed ΦX174")
+    
+    dc_data <- rbind(dc_data, get_data)
+    i = i + 1
+  }
+  
+  wt_experimental_data <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                          normalized = c(1,1,6,6,6,17,17,17,11,5,1),
+                          type = rep("Experimental Data")) %>% 
+                          mutate(species = factor(species, c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"),
+                                            c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+                          mutate(genome = "Decompressed ΦX174")
+  
+  dc_data <- rbind(dc_data, wt_experimental_data)
+  
+  return(dc_data)
+}
+
+basedir <- "/stor/work/Wilke/tingle/phix174/output/4152022/"
+filedir <- "decompressed_runs/"
+best_dc_sims <- c(79, 94, 10)
+best_dc_gens <- c(468, 202, 233)
+my_dc_runs_data <- best_dc_runs_data(best_dc_sims, best_dc_gens, basedir, filedir)
+```
+
+##### `best_dc_runs_plot()`: 
+
+**FUNCTION** - Uses a dataframe outputted from `best_dc_runs_data()` to plot the relative abundances of each decompressed gene. This specific figure was not used in my thesis, but a version of it was used to create another figure. 
+
+**ARGUMENTS** - dc_data is the output from `best_dc_runs_data()`. *YOU WILL NEED TO MANUALLY EDIT THE FACTOR NAMES TO CORRESPOND TO THE SIMS/GENS YOU WANT!!* ALSO! The scale_y_continuous() values used to create the figure may need to be manually changed. 
+
+**EXAMPLE** - Code is commented out. Calls dataframe created in the example for `best_dc_runs_dat()`. 
+
+```{r}
+best_dc_runs_plot <- function(dc_data){
+  dc_fig <- dc_data %>% 
+            # EDIT THE FACTOR NAMES BELOW TO MATCH THE SIMS/GENS YOU WANT
+            mutate(type = factor(type, c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"),
+                                         c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"))) %>% 
+            ggplot(aes(x = species, y = normalized, color = type, shape = type)) +
+            geom_point(size = 2.5) + 
+            scale_y_continuous(limits = c(0, 36),
+                                breaks = c(0,3,6,9,12,15,18,21,24,27,30,33)) +
+            labs(subtitle = "Decompressed ΦX174") +
+            ylab("Relative Transcript Abundances") +
+            xlab("ΦX174 genes") + 
+            scale_color_manual(values = c("#e37c71", "#808080", "#BEBEBE","black")) +
+            cowplot::theme_minimal_hgrid(12) +
+            theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
+                  axis.text.x = element_text(size=12, family="Arial"),
+                  axis.text.y = element_text(size=12, family="Arial"),
+                  axis.title = element_text(size=12, family="Arial"),
+                  strip.text.x = element_text(size = 12,  family="Arial"),
+                  legend.title = element_blank()) 
+  
+  return(dc_fig)
+}
+
+best_dc_runs_plot(my_dc_runs_data)
+```
+
+
+##### `compare_wt_dc_transcripts_plot()` 
+###### *Figure 5 in thesis, Cleaner version*
+
+**FUNCTION** - Uses dataframes outputted from `best_wt_runs_data()` and `best_dc_runs_data()` to plot the relative abundances of each wildtype and decompressed gene. This is Figure 5 in Tanvi's UG thesis. 
+
+**ARGUMENTS** - wt_data is the output from `best_wt_runs_data()`. dc_data is the output from `best_dc_runs_data()`. *YOU WILL NEED TO MANUALLY EDIT THE FACTOR NAMES TO CORRESPOND TO THE SIMS/GENS YOU WANT!!* ALSO! The scale_y_continuous() values used to create the figure may need to be manually changed. 
+
+**EXAMPLE** - Code is commented out. Calls dataframe created in the example for `best_wt_runs_data()` and `best_dc_runs_data()`. 
+
+```{r}
+compare_wt_dc_transcripts_plot <- function(wt_data, dc_data) {
+  
+  all_data <- rbind(wt_data, dc_data)
+
+  all_figure <- all_data %>% 
+                mutate(type = factor(type, c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"),
+                                                         c("Experimental Data", "Trial 79", "Trial 94", "Trial 10"))) %>% 
+                mutate(genome = factor(genome, c("Wildtype ΦX174", "Decompressed ΦX174"),
+                                                         c("Wildtype ΦX174", "Decompressed ΦX174"))) %>% 
+                ggplot(aes(x = species, y = normalized, color = type, shape = type)) +
+                facet_wrap(~genome) +
+                geom_point(size = 2.5) + 
+                scale_y_continuous(limits = c(0, 36),
+                                   breaks = c(0,3,6,9,12,15,18,21,24,27,30,33)) +
+                ylab("Relative Transcript Abundances") +
+                xlab("ΦX174 genes") + 
+                scale_color_manual(values = c("#e37c71","#808080", "#BEBEBE","black")) +
+                cowplot::theme_minimal_hgrid(12) +
+                theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
+                      axis.text.x = element_text(size=12, family="Arial"),
+                      axis.text.y = element_text(size=12, family="Arial"),
+                      axis.title = element_text(size=12, family="Arial"),
+                      strip.text.x = element_text(size = 12,  family="Arial"),
+                      legend.title = element_blank()) 
+  
+  return(all_figure)
+                
+}
+
+compare_wt_dc_transcripts_plot(my_wt_runs_data, my_dc_runs_data)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Clean up this stuff 
 
 **Comparing decompressed and wildtype**
 ```{r}
-filedir <- "decompressed_runs/"
 
-sim_79_wt <- logel_plot(basedir, "", 79, 468, 1200) + 
-             ylab("Relative Transcript Abundance") + 
-             scale_y_continuous(limits = c(0, 18),
-                                breaks = c(0,3,6,9,12,15,18)) + 
-            labs(subtitle = "Trial 79") + 
-            theme(legend.position = "none",
-                          plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-                          axis.text.x = element_text(size=12, family="Arial"),
-                          axis.text.y = element_text(size=12, family="Arial"),
-                          axis.title = element_text(size=12, family="Arial"),
-                          strip.text.x = element_text(size = 12,  family="Arial"))
-
-sim_94_wt <- logel_plot(basedir, "", 94, 202, 1200) + 
-             #ylab("Relative Transcript Abundance") + 
-             labs(subtitle = "Trial 94") + 
-             scale_y_continuous(limits = c(0, 18),
-                                breaks = c(0,3,6,9,12,15,18)) + 
-             # scale_y_continuous(limits = c(0, 20),
-             #                    breaks = c(0,4,8,12,16,20)) +
-            theme(legend.position = "none",
-                plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-                axis.text.x = element_text(size=12, family="Arial"),
-                axis.text.y = element_text(size=12, family="Arial"),
-                axis.title = element_text(size=12, family="Arial"),
-                strip.text.x = element_text(size = 12,  family="Arial"))
-
-sim_10_wt <- logel_plot(basedir, "", 10, 233, 1200) + 
-             #ylab("Relative Transcript Abundance") + 
-             labs(subtitle = "Trial 10") + 
-             # scale_y_continuous(limits = c(0, 42),
-             #                    breaks = c(0,7, 14, 21, 28, 35, 42)) +
-            scale_y_continuous(limits = c(0, 18),
-                                breaks = c(0,3,6,9,12,15,18)) + 
-            theme(legend.position = "none",
-                plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-                axis.text.x = element_text(size=12, family="Arial"),
-                axis.text.y = element_text(size=12, family="Arial"),
-                axis.title = element_text(size=12, family="Arial"),
-                strip.text.x = element_text(size = 12,  family="Arial"))
-
-wildtype_sims <- plot_grid(sim_79_wt, sim_94_wt, sim_10_wt, ncol=3) 
-ggsave(paste0(figuredir,"wt_sims.png"), width = 7, height = 5)
-
-sim_79_dc <- logel_plot(basedir, filedir, 79, 468, 1200) +
-             scale_y_continuous(limits = c(0, 18),
-                                breaks = c(0,3,6,9,12,15,18)) +
-            labs(subtitle = "Decompressed ΦX174") + 
-            theme(legend.position = "none",
-                plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
-                axis.text.x = element_text(size=12, family="Arial"),
-                axis.text.y = element_text(size=12, family="Arial"),
-                axis.title = element_text(size=12, family="Arial"),
-                strip.text.x = element_text(size = 12,  family="Arial"))
 
 sim_79_wt_abs <- absolute_logel(basedir, "", 79, 468, 1200) + 
              ylab("Absolute Transcript Abundance") + 
