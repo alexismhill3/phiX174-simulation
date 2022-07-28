@@ -18,11 +18,11 @@ Directory of Each Figure from UG thesis:
 
 2. **Figure 3** from 
 
-3. **Figure 4** from  `logel_timeseries()`
+3. **Figure 4** from `logel_timeseries()`
 
 4. **Figure 5** from `compare_wt_dc_transcripts_plot()`
 
-5. **Figure 6** from 
+5. **Figure 6** from `compare_wt_dc_absolute_transcripts_plot()`
 
 6. **Figure 7** from 
 
@@ -190,7 +190,7 @@ rmse_curves <- function(basedir, filedir, sim, timestamp){
  }
 ```
 
-####  `logel_timeseries()`
+#### `logel_timeseries()`
 
 **FUNCTION** - creates a 4 column, 1 row plot of transcript abundances for 1 simulation and three different generations (ex Simulation 10, generations 1, 250, and 500). The first column in the plot is the experimental qPCR relative abundances, described in Logel 2020. Plots in columns 2, 3, and 4 correspond to first, second, and third generations (respectively) specified by the user. The purpose of this plot is to showcase that as RMSE values drop, the overall transcript abundance pattern evolves to be closer to qPCR data. 
 
@@ -328,7 +328,7 @@ absolute_logel <- function(basedir, filedir, sim, gen, timestamp){
 
 DON'T hit run on these code blocks before reading the following descriptions -- they require some finagling before they will produce the figures you want. These are snippets borrowed from the code I used to make the figures in my thesis. I did not write pretty wrapper functions for these since I wanted to provide some flexbility with the stylizing (ie I got a wee bit lazy. As my penance, I have included descriptions of how to get these blocks to run & how to customize it with the latest output data). You will notice a lot of redundancy ... but I think it's a small price to pay for improved readability. 
 
-#### **STEP 1** If you want to see the figures that these code blocks produce, uncomment the following code. This will redirect the basedir and filedir to output produced for my thesis. 
+**STEP 1** If you want to see the figures that these code blocks produce, uncomment the following code. This will redirect the basedir and filedir to output produced for my thesis. 
 
 `basedir` <- filepath to 4/15/2022 simulation output files. Has all the .tsv files produced during the optimization script
 `filedir` <- filepath to folder within 4/15/2022 which has runs for the decompressed genome. 
@@ -338,10 +338,10 @@ DON'T hit run on these code blocks before reading the following descriptions -- 
 #  filedir <- "decompressed_runs/" 
 ```
 
-#### **STEP 2** 
-This script 
+**STEP 2** 
+These functions are used to create figures from my thesis. They require some more manual manipulation of some hard coded elements - so be sure to read all of the documentation that proceeds each function before implementing it. 
 
-##### `best_wt_runs_data()`: 
+#### `best_wt_runs_data()`: 
 
 **FUNCTION** - returns a dataframe. Contains 1) all of the wildtype simulation runs at timepoint 1200, with transcript abundances normalized expression of gene A 2) It has the experimentally-derived, normalized transcript abundances described in Logel 2020 (1:6:17...etc)
 
@@ -399,7 +399,7 @@ best_wt_gens <- c(468, 202, 233)
 my_wt_runs_data <- best_wt_runs_data(best_wt_sims, best_wt_gens, basedir, filedir)
 ```
 
-##### `best_wt_runs_plot()`: 
+#### `best_wt_runs_plot()`: 
 
 **FUNCTION** - Uses a dataframe outputted from `best_wt_runs_data()` to plot the relative abundances of each wildtype gene. This specific figure was not used in my thesis, but a version of it was used to create another figure. 
 
@@ -436,7 +436,7 @@ best_wt_runs_plot(my_wt_runs_data)
 ```
 
 
-##### `best_dc_runs_data()`
+#### `best_dc_runs_data()`
 **FUNCTION** - returns a dataframe. Contains 1) all of the decompressed simulation runs at timepoint 1200, with transcript abundances normalized expression of gene A 2) It has the experimentally-derived, normalized transcript abundances for the WILDTYPE described in Logel 2020 (1:6:17...etc)
 
 **ARGUMENTS** - basedir, decomp_filedir (path to decompressed runs), best_dc_sims (the simulation numbers you want to plot), best_dc_gens (the generation number within each simulation that you want to plot). 
@@ -492,7 +492,7 @@ best_dc_gens <- c(468, 202, 233)
 my_dc_runs_data <- best_dc_runs_data(best_dc_sims, best_dc_gens, basedir, filedir)
 ```
 
-##### `best_dc_runs_plot()`: 
+#### `best_dc_runs_plot()`: 
 
 **FUNCTION** - Uses a dataframe outputted from `best_dc_runs_data()` to plot the relative abundances of each decompressed gene. This specific figure was not used in my thesis, but a version of it was used to create another figure. 
 
@@ -529,7 +529,7 @@ best_dc_runs_plot(my_dc_runs_data)
 ```
 
 
-##### `compare_wt_dc_transcripts_plot()` 
+#### `compare_wt_dc_transcripts_plot()` 
 ###### *Figure 5 in thesis, Cleaner version*
 
 **FUNCTION** - Uses dataframes outputted from `best_wt_runs_data()` and `best_dc_runs_data()` to plot the relative abundances of each wildtype and decompressed gene. This is Figure 5 in Tanvi's UG thesis. 
@@ -570,6 +570,105 @@ compare_wt_dc_transcripts_plot <- function(wt_data, dc_data) {
 
 compare_wt_dc_transcripts_plot(my_wt_runs_data, my_dc_runs_data)
 ```
+
+#### `compare_wt_dc_absolute_transcripts_plot()`
+###### *Figure 6 in thesis, Cleaner version*
+
+**FUNCTION** - Plots absolute transcript abundances for each gene, faceted by wildtype or decompressed genomes. 
+
+**ARGUMENTS** - best_sims = vector with best simulation numbers, best_gens = vector with best generations within each simulation, basedir, wt_filedir = directory with wildtype runs, dc_filedir = directory with decompressed runs. *YOU WILL NEED TO MANUALLY EDIT THE FACTOR NAMES TO CORRESPOND TO THE SIMS/GENS YOU WANT!!* 
+
+```{r}
+compare_wt_dc_absolute_transcripts_plot <- function(best_sims, best_gens, basedir, wt_filedir, dc_filedir) {
+  
+  # Get wt data w/ absolute counts for specific simulations
+  i = 1
+  wt_data <- data.frame()
+  while(i <= length(best_sims)){
+    
+  get_data <- read_tsv(paste0(basedir, wt_filedir,"sim_", 
+                              best_sims[i], "_gen_", best_gens[i], ".tsv" )) %>% 
+                mutate(time = round(time)) %>% 
+                filter(time == 1200) %>% 
+                filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+                mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                                 "gene_K", "gene_C", "gene_D",
+                                                 "gene_E", "gene_J", "gene_F",
+                                                 "gene_G", "gene_H"),
+                                               c("A", "A*", "B", "K",
+                                                 "C", "D", "E", "J",
+                                                 "F", "G", "H"))) %>% 
+                mutate(type = paste0("Trial ", best_sims[i])) %>% 
+                select(species, transcript, type) %>% 
+                mutate(genome = "Wildtype ΦX174")
+    
+    wt_data <- rbind(wt_data, get_data)
+    i = i + 1
+  }
+  
+  # Get dc data w/ absolute counts for specific simulations
+  j = 1
+  dc_data <- data.frame()
+  while(j <= length(best_sims)){
+    
+    get_data <- read_tsv(paste0(basedir, dc_filedir,"sim_", 
+                                best_sims[j], "_gen_", best_gens[j], ".tsv" )) %>% 
+                mutate(time = round(time)) %>% 
+                filter(time == 1200) %>% 
+                filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+                mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                                 "gene_K", "gene_C", "gene_D",
+                                                 "gene_E", "gene_J", "gene_F",
+                                                 "gene_G", "gene_H"),
+                                               c("A", "A*", "B", "K",
+                                                 "C", "D", "E", "J",
+                                                 "F", "G", "H"))) %>% 
+                mutate(type = paste0("Trial ", best_sims[j])) %>% 
+                select(species, transcript, type) %>% 
+                mutate(genome = "Decompressed ΦX174")
+    
+    dc_data <- rbind(dc_data, get_data)
+    j = j + 1
+  }
+  
+  # Combine datasets into 1 big dataset 
+  all_abs_data <- rbind(wt_data, dc_data)
+  
+  # Plot 
+  all_figure <- all_abs_data %>% 
+                mutate(type = factor(type, c("Trial 79", "Trial 94", "Trial 10"),
+                                           c("Trial 79", "Trial 94", "Trial 10"))) %>% 
+                mutate(genome = factor(genome, c("Wildtype ΦX174", "Decompressed ΦX174"),
+                                               c("Wildtype ΦX174", "Decompressed ΦX174"))) %>% 
+                ggplot(aes(x = species, y = transcript, color = type, shape = type)) +
+                facet_wrap(~genome) +
+                geom_point(size = 2.5) + 
+                scale_shape_manual(values = c(17, 15, 3)) + 
+                #geom_point(size = 2.5, shape = c(rep(c(17), 11),rep(c(15), 11),rep(c(3), 11))) + 
+                #scale_y_continuous(limits = c(0, 36),
+                #                   breaks = c(0,3,6,9,12,15,18,21,24,27,30,33)) +
+                ylab("Absolute Transcript Abundances") +
+                xlab("ΦX174 genes") + 
+                scale_color_manual(values = c("#808080", "#BEBEBE","black")) +
+                cowplot::theme_minimal_hgrid(12) +
+                theme(plot.subtitle = element_text(hjust = 0.5, size = 12,family = "Arial"),
+                      axis.text.x = element_text(size=12, family="Arial"),
+                      axis.text.y = element_text(size=12, family="Arial"),
+                      axis.title = element_text(size=12, family="Arial"),
+                      strip.text.x = element_text(size = 12,  family="Arial"),
+                      legend.title = element_blank()) 
+  
+  return(all_figure)
+}
+
+my_best_sims <- c(79, 94, 10)
+my_best_gens <- c(468, 202, 233)
+my_basedir <- "/stor/work/Wilke/tingle/phix174/output/4152022/"
+my_wt_filedir <- ""
+my_dc_filedir <- "decompressed_runs/"
+compare_wt_dc_absolute_transcripts_plot(my_best_sims, my_best_gens, my_basedir, my_wt_filedir, my_dc_filedir) 
+```
+
 
 
 
