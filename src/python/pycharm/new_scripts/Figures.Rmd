@@ -14,6 +14,7 @@ This Rmd file contains code snippets that recreate figures found in my undergrad
 Essentially, each simulation run will have 500/1000 generations. Each generation is a run of the PhiX174 pinetree model for one infection cycle (as set by timestamp).
 
 Directory of Each Figure from UG thesis:
+
 1. **Figure 1 & 2** were created in powerpoint. It was repurposed from Wright et. al.; not sure if this will have to be redone in a new format to avoid copyright issues. 
 
 2. **Figure 3** from `plot_multi_rmse_curves()`
@@ -45,6 +46,7 @@ basedir <- "/stor/work/Wilke/tingle/phix174/src/python/pycharm/new_scripts/"
 filedir <- "output/"
 figuredir <- paste0(basedir, "figures/")
 ```
+
 
 
 ### **Functions**
