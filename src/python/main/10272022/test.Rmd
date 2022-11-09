@@ -192,7 +192,7 @@ all_sims_report <- all_sims_report %>%
 
 ```{r}
 
-plot_reports(basedir, filedir, "test")
+plot_reports(basedir, filedir, 1, 1, 1, "qPCR Simulations: 1")
 plot_reports()
 ```
 
