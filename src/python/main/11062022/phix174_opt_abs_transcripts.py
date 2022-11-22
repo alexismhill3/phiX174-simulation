@@ -4,9 +4,31 @@ import numpy as np
 import pinetree as pt
 from sklearn.metrics import mean_squared_error
 import sys
+import multiprocessing
+
+# Adapted from https://www.geeksforgeeks.org/parallel-processing-in-python/
+class Process(multiprocessing.Process):
+    def __init__(self, sim, gen, ID, pA, pB, pD, tJ, tF, tG, tH, base_dir, date):
+        super(Process, self).__init__()
+        self.sim = sim
+        self.gen = gen
+        self.ID = ID
+        self.pA = pA
+        self.pB = pB
+        self.pD = pD
+        self.tJ = tJ
+        self.tF = tF
+        self.tG = tG
+        self.tH = tH
+        self.base_dir = base_dir
+        self.date = date
+                 
+    def run(self):
+        print("Running pinetree simulation with ID: {}".format(self.ID))
+        run_pt(self.sim, self.gen, self.ID, self.pA, self.pB, self.pD, self.tJ, self.tF, self.tG, self.tH, self.base_dir, self.date)
 
 # STEP 2: RUN PINETREE FUNCTION
-def run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, date):
+def run_pt(sim, gen, ID, pA, pB, pD, tJ, tF, tG, tH, base_dir, date):
     print(gen, pA, pB, pD, tJ, tF, tG, tH)
     print("Defining PhiX-174 genome")
 
@@ -100,23 +122,38 @@ def run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, date):
 
     # Run simulation
     print("running simulation")
-    model.simulate(time_limit=500, time_step=5,output=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + ".tsv")
+    model.simulate(time_limit=500, time_step=5,output=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ID_" + str(ID) + ".tsv")
     print("Simulation successful!")
+    
+def run_parallel(sim, gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, date, trials):
+    processes = []
+    for i in range(trials):
+      p = Process(sim, gen, i, pA, pB, pD, tJ, tF, tG, tH, base_dir, date)
+      p.start()
+      processes.append(p)
+      
+    for p in processes:
+      p.join()
+    
+    print("Finished running all sims")
 
 # STEP 3: GET ERROR FUNCTION
-def get_error(file, gen):
-    sim = pd.read_csv(file, sep="\t")
-    sim = sim.round({'time': 0})
-    sim = sim[sim['time'] == 500.0]
-    sim = sim[sim.species.str.match("gene_")]
-
+def get_error(sim, gen, trials, base_dir, date):
+    sim = pd.DataFrame()
+    for i in trials: # Average over simulation trials
+        file = base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + "_ID_" + str(i) + ".tsv"
+        tmp = pd.read_csv(file, sep="\t")
+        tmp = tmp.round({'time': 0})
+        tmp = tmp[tmp['time'] == 500.0]
+        tmp = tmp[tmp.species.str.match("gene_")]
+        sim = sim.append(tmp, ignore_index=True)
+    sim = sim.groupby("species").mean()
+    
     if (gen == 0):
         if (len(sim) != 11):
             error = -1
             return (error)
         else:
-            #sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
-            #sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
             sim["exp"] = [17, 17, 102, 102, 289, 289, 187, 85, 17, 289, 102]
             error = round(mean_squared_error(sim.exp, sim.transcript, squared=False), 5)
             return (error)
@@ -128,14 +165,12 @@ def get_error(file, gen):
             return (error)
 
         else:
-            #sim["norm"] = sim['transcript'] / (sim.iloc[0]["transcript"])
-            #sim["exp"] = [1, 1, 6, 6, 17, 17, 11, 5, 1, 17, 6]
             sim["exp"] = [17, 17, 102, 102, 289, 289, 187, 85, 17, 289, 102]
             error = round(mean_squared_error(sim.exp, sim.transcript, squared=False), 5)
             return (error)
 
 # STEP 4:
-def main(u, o, o_prom, o_term, date, sim, base_dir):
+def main(u, o, o_prom, o_term, date, sim, base_dir, trials, iterations):
     gen = 0
     pA = np.random.normal(u, o, 1)[0]
     pB = np.random.normal(u, o, 1)[0]
@@ -151,25 +186,21 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
     min_error = None
     min_gen = None  # generation which produced min_error
 
-    while (gen < 2000):
+    while (gen < iterations):
         print("gen = ", gen)
-        
-        # halve step standard dev. when we reach the halfway point
-        if (gen == 2000):
-            o_prom = o_prom / 2
-            o_term = o_term / 2
-          
-        print(f"Using S.D. {o_prom} for promoters and {o_term} for terminators")
 
         while (gen == 0):
             try:
                 print(f"\n")
                 print("trying")
                 print(f"\n")
-                run_pt(gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, date)
-                new_error = get_error(file=base_dir + "output/" + str(date) + "/sim_" +str(sim) +"_gen_" + str(gen) + ".tsv", gen=gen)
+                
+                ##----- PARALLELIZE HERE -----##
+                run_parallel(sim, gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, date, trials)
+                new_error = get_error(sim, gen, trials, base_dir, date)
                 print("new_error = ", new_error)
-
+                ##----------------------------##
+                
                 if (new_error == -1):
                     print("poor starting values chosen, retrying")
                     print(f"\n")
@@ -243,21 +274,18 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
             pA = pA * (2 ** step)  
             print("new pA = ", pA)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH, base_dir = base_dir, date = date)
 
         elif (rX == "pB"):
             step = np.random.normal(0, o_prom, 1)[0]
             pB = pB * (2 ** step)  
             print("new pB = ", pB)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH,base_dir = base_dir, date = date)
 
         elif (rX == "pD"):
             step = np.random.normal(0, o_prom, 1)[0]
             pD = pD * (2 ** step)  
             print("new pD = ", pD)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH, base_dir = base_dir, date = date)
 
         elif (rX == "tJ"):
             step = np.random.normal(0, o_term, 1)[0]
@@ -268,7 +296,6 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
                 tJ = new_tJ
             print("new tJ = ", tJ)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH, base_dir = base_dir, date = date)
 
         elif (rX == "tF"):
             step = np.random.normal(0, o_term, 1)[0]
@@ -279,7 +306,6 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
                 tF = new_tF
             print("new tF = ", tF)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH, base_dir = base_dir, date = date)
 
         elif (rX == "tG"):
             step = np.random.normal(0, o_term, 1)[0]
@@ -290,7 +316,6 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
                 tG = new_tG
             print("new tG = ", tG)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH, base_dir = base_dir, date = date)
 
         elif (rX == "tH"):
             step = np.random.normal(0, o_term, 1)[0]
@@ -301,9 +326,12 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
                 tH = new_tH
             print("new tH = ", tH)
             print(pA, pB, pD, tJ, tF, tG, tH)
-            run_pt(gen=gen, pA=pA, pB=pB, pD=pD, tJ=tJ, tF=tF, tG=tG, tH=tH, base_dir = base_dir, date = date)
-
-        new_error = get_error(file=base_dir + "output/" + str(date) + "/sim_" + str(sim) + "_gen_" + str(gen) + ".tsv", gen=gen)
+            
+        ##----- PARALLELIZE HERE -----##
+        run_parallel(sim, gen, pA, pB, pD, tJ, tF, tG, tH, base_dir, date, trials)
+        new_error = get_error(sim, gen, trials, base_dir, date)
+        print("new_error = ", new_error)
+        ##----------------------------##
 
         if (new_error > min_error):
             # Save poor run
@@ -322,6 +350,7 @@ def main(u, o, o_prom, o_term, date, sim, base_dir):
 
             # Increment generation
             gen = gen + 1
+            print(f"\n")
 
         else:
             # save error & values.
@@ -346,5 +375,7 @@ if __name__ == '__main__':
     o = float(sys.argv[5])
     o_prom = float(sys.argv[6])
     o_term = float(sys.argv[7])
-    main(u, o, o_prom, o_term, date, sim, base_dir)
-    #base_dir = "/Users/tanviingle/Documents/Wilke/phix174/"
+    trials = 5
+    iterations = 4000
+        
+    main(u, o, o_prom, o_term, date, sim, base_dir, trials, iterations)

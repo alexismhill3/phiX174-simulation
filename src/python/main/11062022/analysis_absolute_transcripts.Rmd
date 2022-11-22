@@ -221,7 +221,7 @@ best_gen <- "1662"
 time_stamp <- 500
 
 get_single_report(filedir, sim_num)
-logel_timeseries_with_pcr(filedir, sim_num, "0", "776", best_gen, time_stamp)
+logel_timeseries_with_pcr(filedir, sim_num, "0", "435", best_gen, time_stamp)
 transcripts_vs_time_plot(filedir, sim_num, best_gen)
 ```
 
@@ -231,7 +231,7 @@ best_gen <- "1899"
 time_stamp <- 500
 
 get_single_report(filedir, sim_num)
-logel_timeseries_with_pcr(filedir, sim_num, "0", "624", best_gen, time_stamp)
+logel_timeseries_with_pcr(filedir, sim_num, "0", "235", best_gen, time_stamp)
 transcripts_vs_time_plot(filedir, sim_num, best_gen)
 ```
 ```{r}
@@ -240,6 +240,6 @@ best_gen <- "1805"
 time_stamp <- 500
 
 get_single_report(filedir, sim_num)
-logel_timeseries_with_pcr(filedir, sim_num, "0", "342", best_gen, time_stamp)
+logel_timeseries_with_pcr(filedir, sim_num, "0", "883", best_gen, time_stamp)
 transcripts_vs_time_plot(filedir, sim_num, best_gen)
 ```
