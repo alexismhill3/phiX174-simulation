@@ -100,7 +100,7 @@ logel_plot <- function(filedir, sim, gen, timestamp){
        #scale_y_continuous() + 
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
-       scale_y_continuous(limits = c(0, 300)) +
+       scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
        ylab("")+
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
@@ -148,7 +148,7 @@ logel_timeseries_with_pcr <- function(filedir, sim, gen1, gen2, gen3, timestamp)
             ggplot(aes(x=species, y=normalized, fill = species)) +
             geom_bar(stat="identity", color = "black") + 
             scale_fill_manual(values = my_palette) + 
-            scale_y_continuous(limits = c(0, 300)) + 
+            scale_y_continuous(limits = c(0, 300), expand = c(0,0)) + 
             #breaks = c(0,3,6,9,12,15,18)) + 
             ggtitle("Target (qPCR)") + 
             ylab("Relative transcripts")+ 
