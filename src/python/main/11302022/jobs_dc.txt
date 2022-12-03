@@ -1,0 +1,1 @@
+python3  phix174_opt_12_dc.py  18  3310  8.448189  3.230365  34.62136  0.3467087  0.5057597  0.8051313  0.9287955  /stor/work/Wilke/amh7958/phix174/data/decompressed_genomic_coords_1.csv  11302022
