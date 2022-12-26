@@ -15,8 +15,7 @@ require(kableExtra)
 ```
 
 #### Summary
-- For each generation, ran 5 individual simulations and then used the average to calculate RMSE
-- ran for 4000 generations
+Simulated decompressed phiX174 gene expression, using promoter and terminator values estimated from fitting the model to qPCR data. 
 
 Common Functions & Base directory 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
@@ -130,8 +129,9 @@ logel_plot_2 <- function(df){
        #scale_y_continuous() + 
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
-       scale_y_continuous(limits = c(0, 300)) +
-       ylab("")+
+       scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
+       ylab("Transcripts") +
+       xlab("genes") +
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -237,6 +237,7 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 
 
 ```{r}
+# Get averages from decompressed simulation (5 replicates) and plot transcripts
 gen <- 3310
 sim_data <- data.frame()
 for(i in 1:5){
@@ -249,9 +250,10 @@ sim_data <- sim_data %>%
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-decomp <- logel_plot_2(sim_data)
+decomp <- logel_plot_2(sim_data) + ggtitle("Decompressed")
 ```
 ```{r}
+# Now get averages and plot WT simulation
 wt_path <- "/stor/scratch/Wilke/amh7958/phix174-simulation/output/11162022/"
 gen <- 3310
 sim_data_wt <- data.frame()
@@ -265,11 +267,11 @@ sim_data_wt <- sim_data_wt %>%
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-wt <- logel_plot_2(sim_data_wt)
-cowplot::plot_grid(decomp, wt,
-                      #label_x = "genes", label_y = "transcript abundances", 
-                      #labels = c("A", "B", "", ""), 
-                      ncol = 2, nrow = 1)
+wt <- logel_plot_2(sim_data_wt) + ggtitle("Wild type")
+```
+
+```{r}
+cowplot::plot_grid(wt, decomp, ncol = 2, nrow = 1)
 ```
 
 
