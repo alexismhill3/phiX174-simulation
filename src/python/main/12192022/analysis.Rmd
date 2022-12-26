@@ -276,7 +276,7 @@ exp_rnaseq <- function() {
             scale_fill_manual(values = my_palette) + 
             scale_y_continuous(limits = c(0, 300)) + 
             #breaks = c(0,3,6,9,12,15,18)) + 
-            ggtitle("Target (RNAseq)") + 
+            ggtitle("Target (RNA-seq)") + 
             ylab("Transcripts")+ 
             xlab("genes")+ 
             cowplot::theme_cowplot(12) +
@@ -375,11 +375,10 @@ logel_plot_2(sim_data) + ggtitle("Simulation")
 ```
 
 ```{r}
-filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "test_pred_elements/", sep="")
-
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", date, "/", sep="")
 sim_data <- data.frame()
-for(i in 6:10){
-     tmp <- read_tsv(paste0(filedir, "sim_test_pred_gen_", i, ".tsv")) %>%
+for(i in 0:4){
+     tmp <- read_tsv(paste0(filedir, "sim_7_gen_2878_ID_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
      sim_data <- rbind(sim_data, tmp)}
@@ -403,13 +402,14 @@ sim_data_2 <- sim_data_2 %>%
 
 rnaseq_plot <- exp_rnaseq()
 qpcr_plot <- exp_qpcr()
-sim_plot <- logel_plot_2(sim_data) + ggtitle("Simulation (manual)")
-sim_plot_2 <- logel_plot_2(sim_data_2) + ggtitle("Simulation (fitted)")
+sim_plot <- logel_plot_2(sim_data) + ggtitle("Fitted simulation (RNA-seq)")
+sim_plot_2 <- logel_plot_2(sim_data_2) + ggtitle("Fitted simulation (qPCR)")
 
 cowplot::plot_grid(rnaseq_plot, sim_plot, qpcr_plot, sim_plot_2,
                       #label_x = "genes", label_y = "transcript abundances", 
                       #labels = c("A", "B", "", ""), 
                       ncol = 2, nrow = 2)
+ggsave("figures/rnaseq_qpcr_comp_barplot.png", width = 5, height = 5)
 ```
 
 ```{r}
