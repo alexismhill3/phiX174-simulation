@@ -1,7 +1,7 @@
 ---
 title: "Analysis"
 author: "Alexis Hill"
-date: "11/06/2022"
+date: "12/19/2022"
 output: html_document
 ---
 
@@ -15,14 +15,18 @@ require(kableExtra)
 ```
 
 #### Summary
-Simulated decompressed phiX174 gene expression, using promoter and terminator values estimated from fitting the model to qPCR data. 
+
 
 Common Functions & Base directory 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
-date <- "11302022"
+date <- "12192022"
 filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", date, "/", sep="")
 figdir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "figures/", sep="")
+
+my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
 
 # get_reports() retrieves the reports for all the simulation runs in a specified scenario
 # had hardcoded case for Scenario B where there is no simulation 1
@@ -99,7 +103,7 @@ logel_plot <- function(filedir, sim, gen, timestamp){
        #scale_y_continuous() + 
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
-       scale_y_continuous(limits = c(0, 300)) +
+       scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
        ylab("")+
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
@@ -130,8 +134,8 @@ logel_plot_2 <- function(df){
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
        scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
-       ylab("Transcripts") +
-       xlab("genes") +
+       ylab("") +
+       xlab("genes") + 
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -209,6 +213,101 @@ logel_timeseries_with_pcr <- function(filedir, sim, gen1, gen2, gen3, timestamp)
   return(figure)
 }
 
+logel_timeseries_with_rnaseq <- function(filedir, sim, gen1, gen2, gen3, timestamp) {
+  
+ 
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+  
+  sim_qpcr <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                        normalized = c(27, 27, 120, 81, 123, 228, 201, 264, 231, 118, 76)) %>% 
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 300), expand = c(0,0)) + 
+            #breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("Target (RNAseq)") + 
+            ylab("Transcripts")+ 
+            xlab("ΦX174 genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  
+  sim_start <- logel_plot(filedir, sim, gen = gen1, timestamp = timestamp) + 
+               ggtitle(paste0("Generation ", gen1)) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  sim_middle <- logel_plot(filedir, sim, gen = gen2, timestamp = timestamp) + 
+                ggtitle(paste0("Generation ", gen2)) +
+                theme(plot.title = element_text(hjust = 0.5))
+  sim_end <- logel_plot(filedir, sim, gen = gen3, timestamp = timestamp) + 
+               ggtitle(paste0("Final", "")) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  
+  #title <- ggdraw() + draw_label(paste0("", "Simulated Transcription Patterns"))
+  
+  figure <- cowplot::plot_grid(sim_qpcr, sim_start, sim_middle, sim_end,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      #labels = c("A", "B", "", ""), 
+                      ncol = 4, nrow = 1)
+  
+  #figure <- plot_grid(panels, ncol=1, rel_heights=c(0.1, 1)) 
+               
+  return(figure)
+}
+
+exp_rnaseq <- function() {
+  figure <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                        normalized = c(27, 27, 120, 81, 123, 228, 201, 264, 231, 118, 76)) %>% 
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 300)) + 
+            #breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("Target (RNAseq)") + 
+            ylab("Transcripts")+ 
+            xlab("genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  return(figure)
+}
+
+exp_qpcr <- function() {
+  figure <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                        normalized = c(17, 17, 102, 102, 102, 289, 289, 289, 187, 85, 17)) %>% 
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 300)) + 
+            #breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("Target (qPCR)") + 
+            ylab("Transcripts")+ 
+            xlab("genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  return(figure)
+}
+
 transcripts_vs_time_plot <- function(filedir, sim, gen){
   
   my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
@@ -235,13 +334,14 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 
 ```
 
+Manual test of phiX174 simulation w/ cryptic promoter btss49 & cryptic terminator RUT3, in original positions. Btss49 overlaps with the RBS for gene C. This doesn't break the simulation but results in truncated gene C products that aren't recorded by pinetree, so the gene C transcript output is lower than expected. 
 
 ```{r}
-# Get averages from decompressed simulation (5 replicates) and plot transcripts
-gen <- 3310
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "test_pred_elements/", sep="")
+
 sim_data <- data.frame()
 for(i in 1:5){
-     tmp <- read_tsv(paste0(filedir, "", i, "_gen_", gen, ".tsv")) %>%
+     tmp <- read_tsv(paste0(filedir, "sim_test_pred_gen_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
      sim_data <- rbind(sim_data, tmp)}
@@ -250,30 +350,124 @@ sim_data <- sim_data %>%
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-decomp <- logel_plot_2(sim_data) + ggtitle("Decompressed")
+
+logel_plot_2(sim_data) + ggtitle("Simulation")
 ```
+
+Second manual test with cryptic promoter moved back 48 nt so that it no longer overlaps with gene C RBS.
+
 ```{r}
-# Now get averages and plot WT simulation
-wt_path <- "/stor/scratch/Wilke/amh7958/phix174-simulation/output/11162022/"
-gen <- 3310
-sim_data_wt <- data.frame()
-for(i in 0:4){
-     tmp <- read_tsv(paste0(wt_path, "", "sim_18_gen_3310_ID_", i, ".tsv")) %>%
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "test_pred_elements/", sep="")
+
+sim_data <- data.frame()
+for(i in 6:10){
+     tmp <- read_tsv(paste0(filedir, "sim_test_pred_gen_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
-     sim_data_wt <- rbind(sim_data_wt, tmp)}
+     sim_data <- rbind(sim_data, tmp)}
 
-sim_data_wt <- sim_data_wt %>% 
+sim_data <- sim_data %>% 
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-wt <- logel_plot_2(sim_data_wt) + ggtitle("Wild type")
+
+logel_plot_2(sim_data) + ggtitle("Simulation")
 ```
 
 ```{r}
-cowplot::plot_grid(wt, decomp, ncol = 2, nrow = 1)
-ggsave("figures/wt_vs_decompressed_transcription_v1.png", width = 9, height = 5)
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "test_pred_elements/", sep="")
+
+sim_data <- data.frame()
+for(i in 6:10){
+     tmp <- read_tsv(paste0(filedir, "sim_test_pred_gen_", i, ".tsv")) %>%
+       mutate(time = round(time)) %>% 
+       filter(time == 500)
+     sim_data <- rbind(sim_data, tmp)}
+
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", "11162022/", sep="")
+
+sim_data_2 <- data.frame()
+for(i in 0:4){
+     tmp <- read_tsv(paste0(filedir, "sim_18_gen_3310_ID_", i, ".tsv")) %>%
+       mutate(time = round(time)) %>% 
+       filter(time == 500)
+     sim_data_2 <- rbind(sim_data_2, tmp)}
+
+sim_data <- sim_data %>% 
+  group_by(species) %>%
+  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
+
+sim_data_2 <- sim_data_2 %>% 
+  group_by(species) %>%
+  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
+
+rnaseq_plot <- exp_rnaseq()
+qpcr_plot <- exp_qpcr()
+sim_plot <- logel_plot_2(sim_data) + ggtitle("Simulation (manual)")
+sim_plot_2 <- logel_plot_2(sim_data_2) + ggtitle("Simulation (fitted)")
+
+cowplot::plot_grid(rnaseq_plot, sim_plot, qpcr_plot, sim_plot_2,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      #labels = c("A", "B", "", ""), 
+                      ncol = 2, nrow = 2)
 ```
 
+```{r}
+plot_reports(filedir, "RNAseq")
+ggsave("figures/fit_to_rnaseq_rmse.png", width = 9, height = 5)
+```
+```{r}
+best_gen_report <- best_gen(filedir)
+best_gen_report
+```
 
+```{r}
+logel_timeseries_with_rnaseq(filedir, "7", "0", "500", "3878", 500)
+ggsave("figures/fit_to_rnaseq_timeseries.png", width = 9, height = 5)
+```
+
+```{r}
+# pA/tH correlation with worst 6 fits removed
+pa_ph_corr <- best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
+        filter(final_min_error <= 24) %>%
+        ggplot(aes(x=pA, y=tH)) +
+         geom_point() + 
+         scale_x_continuous(trans = "log10") +
+         scale_y_continuous(trans = "log10") +
+         geom_smooth(method = lm) +
+         ylab("tH") +
+         cowplot::theme_cowplot(12) 
+pa_ph_corr
+```
+
+```{r}
+# Fitted parameter distributions - boxplots
+promoter_dist <- best_gen_report %>% 
+  filter(final_min_error <= 24) %>%
+  select(-1:-2, -12:-15) %>%
+  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
+  filter(element %in% c("pA", "pB", "pD", "btss49")) %>%
+  ggplot(aes(x=element, y=strength, fill=element)) +
+    geom_boxplot() +
+    ylab(expression("strength" ~ 
+                         (10^{6} ~ M^{-1} ~ s^{-1})
+                       )) +
+    theme(legend.position = "none")
+
+terminator_dist <- best_gen_report %>% 
+  filter(final_min_error <= 24) %>%
+  select(-1:-2, -12:-15) %>%
+  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
+  filter(element %in% c("RUT3", "tF", "tG", "tJ", "tH")) %>%
+  ggplot(aes(x=element, y=strength, fill=element)) +
+    geom_boxplot() +
+    ylab("termination probability") +
+    theme(legend.position = "none")
+
+cowplot::plot_grid(promoter_dist, terminator_dist, pa_ph_corr,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      #labels = c("A", "B", "", ""), 
+                      ncol = 3, nrow = 1)
+ggsave("figures/fit_to_rnaseq_parameter_plots.png", width = 9, height = 5)
+```
 
