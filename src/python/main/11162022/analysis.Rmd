@@ -151,7 +151,7 @@ logel_timeseries_with_pcr <- function(filedir, sim, gen1, gen2, gen3, timestamp)
             scale_y_continuous(limits = c(0, 300), expand = c(0,0)) + 
             #breaks = c(0,3,6,9,12,15,18)) + 
             ggtitle("Target (qPCR)") + 
-            ylab("Relative transcripts")+ 
+            ylab("Transcripts")+ 
             xlab("ΦX174 genes")+ 
             cowplot::theme_cowplot(12) +
             theme(legend.position = "none",
@@ -223,7 +223,9 @@ write_csv(best_gen_report, "best_gen_report.csv")
 sim_num <- "18"
 best_gen <- "3310"
 time_stamp <- 500
+```
 
+```{r}
 get_single_report(filedir, sim_num)
 transcripts_vs_time_plot(filedir, sim_num, best_gen)
 ```
@@ -246,16 +248,16 @@ best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
 
 ```{r}
 # pA/tH correlation with worst 6 fits removed
-best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
+pa_ph_corr <- best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
         filter(final_min_error <= 2.8) %>%
-        ggplot(aes(x=pA, y=tH_mut)) +
+        ggplot(aes(x=pA, y=tH)) +
          geom_point() + 
          scale_x_continuous(trans = "log10") +
          scale_y_continuous(trans = "log10") +
          geom_smooth(method = lm) +
-         ylab("1 - tH") +
+         ylab("tH") +
          cowplot::theme_cowplot(12) 
-ggsave("figures/pA_pH_correlation.png", width = 9, height = 5)
+#ggsave("figures/pA_pH_correlation_short.png", width = 3, height = 5)
 ```
 ```{r}
 # Fitted parameter distributions - boxplots
@@ -266,6 +268,10 @@ promoter_dist <- best_gen_report %>%
   filter(element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=element, y=strength, fill=element)) +
     geom_boxplot() +
+    scale_y_continuous(limits = c(0, 40)) +
+    ylab(expression("strength" ~ 
+                         (10^{6} ~ M^{-1} ~ s^{-1})
+                       )) +
     theme(legend.position = "none")
 
 terminator_dist <- best_gen_report %>% 
@@ -275,14 +281,28 @@ terminator_dist <- best_gen_report %>%
   filter(!element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=element, y=strength, fill=element)) +
     geom_boxplot() +
+    scale_y_continuous(limits = c(0, 1)) +
+    ylab("termination probability") +
     theme(legend.position = "none")
 
+cowplot::plot_grid(promoter_dist, terminator_dist, pa_ph_corr,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      #labels = c("A", "B", "", ""), 
+                      ncol = 3, nrow = 1)
+ggsave("figures/estimated_parameter_distributions_all.png", width = 9, height = 5)
+```
+```{r}
 cowplot::plot_grid(promoter_dist, terminator_dist,
                       #label_x = "genes", label_y = "transcript abundances", 
                       #labels = c("A", "B", "", ""), 
                       ncol = 2, nrow = 1)
-ggsave("figures/estimated_parameter_distributions.png", width = 9, height = 5)
+ggsave("figures/estimated_parameter_distributions.png", width = 6, height = 4)
 ```
+```{r}
+pa_ph_corr
+ggsave("figures/pa_ph_correlation.png", width = 6, height = 4)
+```
+
 
 
 ```{r}
