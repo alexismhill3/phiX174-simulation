@@ -449,6 +449,7 @@ promoter_dist <- best_gen_report %>%
   filter(element %in% c("pA", "pB", "pD", "btss49")) %>%
   ggplot(aes(x=element, y=strength, fill=element)) +
     geom_boxplot() +
+    scale_y_continuous(limits = c(0, 40)) +
     ylab(expression("strength" ~ 
                          (10^{6} ~ M^{-1} ~ s^{-1})
                        )) +
@@ -461,6 +462,7 @@ terminator_dist <- best_gen_report %>%
   filter(element %in% c("RUT3", "tF", "tG", "tJ", "tH")) %>%
   ggplot(aes(x=element, y=strength, fill=element)) +
     geom_boxplot() +
+    scale_y_continuous(limits = c(0, 1)) +
     ylab("termination probability") +
     theme(legend.position = "none")
 
