@@ -355,4 +355,11 @@ estimates <- cowplot::plot_grid(promoter_dist_2, terminator_dist_2, pa_ph_corr,
 cowplot::plot_grid(logel, estimates, ncol = 1, nrow = 2, labels = c("A", ""))
 ```
 
+```{r}
+estimates_nolabel <- cowplot::plot_grid(promoter_dist_2, terminator_dist_2, pa_ph_corr,
+                      ncol = 3, nrow = 1)
+ggsave("figures/estimates_and_scatter.png", width = 9, height = 3)
+```
+
+
 
