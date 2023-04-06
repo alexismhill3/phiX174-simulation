@@ -1,7 +1,0 @@
-OCTOBER 2021
-------------
-10-19-2021
-Resuming project after med school app hiatus. Met with Alexis to touchbase on project status & next steps. Discussed first optimizing a single parameter value (promoter A strength) instead of all promoters. Created python script 'mini_optimization_pA' to write this code. Finished coding the run_pt(gen,pA) function. 
-
-10-20-2021
-  
