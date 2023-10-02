@@ -93,14 +93,13 @@ logel_plot <- function(filedir, sim, gen, timestamp){
                                          "C", "D", "E", "J",
                                          "F", "G", "H"))) %>% 
        ggplot(aes(x=species, y=transcript, fill = species)) +
-       geom_bar(stat="identity", color = "black") + 
+       geom_bar(stat="identity", color = "black", alpha = 0.75) + 
        scale_fill_manual(values = my_palette) + 
        #scale_y_continuous() + 
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
        scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
-       ylab("") +
-       xlab("Genes") +
+       ylab("")+
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -126,8 +125,8 @@ logel_plot_2 <- function(df){
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
        scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
-       ylab("Simulated transcripts") +
-       xlab("Genes") + 
+       ylab("") +
+       xlab("genes") + 
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -395,7 +394,6 @@ cowplot::plot_grid(boxplots, pa_ph_corr,
 ```
 ```{r}
 best_gen_report_original_model <- read_csv("../01222023/best_gen_report_rnaseq_original.csv")
-best_gen_report_original_model
 ```
 
 ```{r}
@@ -519,7 +517,6 @@ cowplot::plot_grid(legend, row, ncol = 1, rel_heights = c(0.05, 1))
 ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 6.5)
 ```
 
-
 ```{r}
 logel_model <- best_gen_report %>% 
   select(final_min_error) %>%
@@ -548,65 +545,5 @@ best_gen_report %>%
   filter(final_min_error <= 24) %>% 
   summarise(across(everything(), list(mean)))
 ```
-```{r}
-rnaseq <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
-                      normalized = c(27, 27, 120, 81, 123, 228, 201, 264, 231, 118, 76)) %>% 
-          mutate(species = factor(species, c("A", "A*", "B", "K",
-                                       "C", "D", "E", "J",
-                                       "F", "G", "H"),
-                                     c("A", "A*", "B", "K",
-                                       "C", "D", "E", "J",
-                                       "F", "G", "H"))) %>% 
-          ggplot(aes(x=species, y=normalized, fill = species)) +
-          geom_bar(stat="identity", color = "black") + 
-          scale_fill_manual(values = my_palette) + 
-          scale_y_continuous(limits = c(0, 300), breaks = c(100, 200, 300), labels = c("4", "8", "12"), expand = c(0,0)) + 
-          #breaks = c(0,3,6,9,12,15,18)) + 
-          ggtitle("Target (RNA-seq)") + 
-          ylab("Normalized transcripts")+ 
-          xlab("Genes")+ 
-          cowplot::theme_cowplot(12) +
-          theme(legend.position = "none",) #plot.title = element_text(hjust = 0.5)) 
-
-df_cryptic <- data.frame()
-for(i in 0:4){
-     tmp <- read_tsv(paste0(filedir, "/sim_7_gen_3878_ID_", i, ".tsv")) %>%
-       mutate(time = round(time)) %>% 
-       filter(time == 500)
-     df_cryptic <- rbind(df_cryptic, tmp)}
-
-df_cryptic <- df_cryptic %>% 
-  group_by(species) %>%
-  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
-
-plot_cryptic <- logel_plot_2(df_cryptic) + 
-               ggtitle("+ BTSS, RUT3")
-
-fildir_canonical <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", "01222023", "/", sep="")
-df_canonical <- data.frame()
-for(i in 0:4){
-     tmp <- read_tsv(paste0(fildir_canonical, "/sim_15_gen_2467_ID_", i, ".tsv")) %>%
-       mutate(time = round(time)) %>% 
-       filter(time == 500)
-     df_canonical <- rbind(df_canonical, tmp)}
-
-df_canonical <- df_canonical %>% 
-  group_by(species) %>%
-  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
-
-plot_canonical <- logel_plot_2(df_canonical) + 
-               ggtitle("- BTSS, RUT3")
-
-cowplot::plot_grid(rnaseq, plot_cryptic, plot_canonical, nrow = 1)
-ggsave("paper_figures/fitted_sims_both_models.png", width = 9, height = 3)
-```
-```{r}
-row <- cowplot::plot_grid(prom + theme(legend.position = "none"), term, nrow = 1, rel_widths = c(0.45, 0.65))
-
-row
-#cowplot::plot_grid(row, legend, ncol = 2, rel_widths = c(1, 0.1))
-ggsave("paper_figures/rnaseq_estimates_horizontal.png", width = 9, height = 3)
-```
-
 
 

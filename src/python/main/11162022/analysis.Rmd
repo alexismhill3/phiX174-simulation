@@ -209,6 +209,18 @@ best_gen_report <- best_gen(filedir)
 best_gen_report
 ```
 ```{r}
+best_gen_report %>% ggplot(aes(x= final_min_error, y = fct_reorder(as.character(sim), final_min_error, .desc=TRUE))) +
+  geom_point() +
+  geom_vline(xintercept = 2.75, linetype="dotted") +
+  scale_y_discrete(name = "Model") +
+  scale_x_continuous(name = "Final RMSE") +
+  theme_classic() +
+  panel_border()
+ggsave("paper_figures/qPCR_rmses.png", width = 8, height = 4)
+```
+
+
+```{r}
 write_csv(best_gen_report, "best_gen_report.csv")
 ```
 
