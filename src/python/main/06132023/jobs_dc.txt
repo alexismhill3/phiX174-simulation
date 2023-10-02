@@ -1,0 +1,5 @@
+python3  phix174_opt_12_dc.py  15  2467  3.331156	3.215186	13.278452  0.002532139	0.4676184	0.3328964 0.8300457  /stor/scratch/Wilke/amh7958/phix174-simulation/ data/decompressed_genomic_coords_2.csv  06132023 1
+python3  phix174_opt_12_dc.py  15  2467  3.331156	3.215186	13.278452  0.002532139	0.4676184	0.3328964 0.8300457  /stor/scratch/Wilke/amh7958/phix174-simulation/ data/decompressed_genomic_coords_2.csv  06132023 2
+python3  phix174_opt_12_dc.py  15  2467  3.331156	3.215186	13.278452  0.002532139	0.4676184	0.3328964 0.8300457  /stor/scratch/Wilke/amh7958/phix174-simulation/ data/decompressed_genomic_coords_2.csv  06132023 3
+python3  phix174_opt_12_dc.py  15  2467  3.331156	3.215186	13.278452  0.002532139	0.4676184	0.3328964 0.8300457  /stor/scratch/Wilke/amh7958/phix174-simulation/ data/decompressed_genomic_coords_2.csv  06132023 4
+python3  phix174_opt_12_dc.py  15  2467  3.331156	3.215186	13.278452  0.002532139	0.4676184	0.3328964 0.8300457  /stor/scratch/Wilke/amh7958/phix174-simulation/ data/decompressed_genomic_coords_2.csv  06132023 5

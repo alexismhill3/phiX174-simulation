@@ -1,0 +1,204 @@
+---
+title: "test"
+author: "Tanvi Ingle"
+date: "4/15/2022"
+output: html_document
+---
+
+### Libraries
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+```
+
+Common Functions & Base directory 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+# Functions & Variables I use a lot
+basedir <- "/stor/work/Wilke/tingle/phix174/output/4152022/"
+
+# get_reports() retrieves the reports for all the simulation runs in a specified scenario
+# had hardcoded case for Scenario B where there is no simulation 1
+get_reports <- function(basedir, filedir){
+  report <- data.frame()
+  batch <- c(1,2,3,4,5,
+             7,8,9,10,11,
+             12,14,15,16,17,
+             18,19,20,21,22,
+             25,26,27,28,29,
+             31,32,33,34,35,
+             36,37,38,39,42,
+             43,44,45,46,49)
+  
+  for(i in batch){
+      sim = read_csv(paste0(basedir, "", "sim_", batch[i], "_report.csv")) 
+      sim$sim = batch[i]
+      report <- rbind(report, sim)}
+  return(report)
+}
+
+# plot_reports() plots the RMSE v generations for all the simulations in a given scenario
+plot_reports <- function(basedir, filedir,  title){
+  x_scale <- c(0, 100, 200, 300, 400, 500)
+  
+  figure <- get_reports(basedir, filedir) %>% 
+    # filter(!is.na(gen)) %>% 
+    filter(gen > 0) %>% 
+    filter(error < 11) %>% 
+    ggplot(aes(x = gen)) +
+    geom_line(aes(y = error, color = "error"), color = "#CC79A7") + 
+    geom_line(aes(y = min_error, color = "min error"), color = "black") +
+    facet_wrap(~sim) + 
+    ggtitle(title) + 
+    xlab("Generations") +
+    ylab("RMSE") + 
+    #ylim(c(1, 10)) + 
+    scale_x_continuous(breaks = x_scale) + 
+    cowplot::theme_minimal_grid(12) + 
+    theme(axis.text.x = element_text(size=11, angle= -45))
+  
+  return(figure)
+}
+
+
+logel_plot <- function(basedir, filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(basedir, filedir,"sim_", sim, "_gen_", gen, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=normalized, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_y_continuous() + 
+       scale_y_continuous(limits = c(0, 18),
+                          breaks = c(0,3,6,9,12,15,18)) +
+       ylab("")+
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+logel_timeseries <- function(basedir, filedir, sim, gen, timestamp) {
+  
+  sim_start <- logel_plot(basedir, filedir, sim, gen = 1, timestamp = 1200)+
+    ylab(paste0("Sim ", sim))
+  sim_middle <- logel_plot(basedir, filedir, sim, gen = gen/2, timestamp = 1200)
+  sim_end <- logel_plot(basedir, filedir, sim, gen = gen, timestamp = 1200)
+  
+  figure <- plot_grid(sim_start, sim_middle, sim_end, 
+                      label_x = "genes", label_y = "transcript abundances", 
+                      ncol = 3, nrow = 1)
+                     
+  return(figure)
+}
+
+get_fitness <- function(file, timepoint){
+  
+  pt_run <- as.data.frame(read_tsv(file)) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == timepoint) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    mutate(stoich = protein/copies) %>%
+    summarise(virions = min(stoich))
+  
+  return(pt_run$virions[1])
+}
+
+```
+
+### **Change in Error over Generations**
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+report <- data.frame()
+batch <- c(1,2,3,4,5,
+           7,8,9,10,11,
+           12,14,15,16,17,
+           18,19,20,21,22,
+           25,26,27,28,29,
+           31,32,33,34,35,
+           36,37,38,39,42,
+           43,44,45,46,49)
+  
+for(i in batch){
+    sim = read_csv(paste0(basedir, "", "sim_", batch[i], "_report.csv")) 
+    sim$sim = batch[i]
+    report <- rbind(report, sim)}
+
+x_scale <- c(0, 100, 200, 300, 400, 500)
+
+plot_stuffs <- report %>% 
+  filter(!is.na(gen)) %>% 
+  filter(!is.na(sim)) %>% 
+  filter(gen > 0) %>% 
+  filter(error < 11) %>% 
+  ggplot(aes(x = gen)) +
+  geom_line(aes(y = error, color = "error"), color = "#CC79A7") + 
+  geom_line(aes(y = min_error, color = "min error"), color = "black") +
+  facet_wrap(~sim) + 
+  ggtitle("Batch 1") + 
+  xlab("Generations") +
+  ylab("RMSE") + 
+  #ylim(c(1, 10)) + 
+  scale_x_continuous(breaks = x_scale) + 
+  cowplot::theme_minimal_grid(12) + 
+  theme(axis.text.x = element_text(size=11, angle= -45))
+
+logel_plot(basedir, "", 10, 233, 1200)
+
+col_order = c("sim", "gen", "pA", "pB", "pD", "tJ", "tF", "tG", "tH",  "error", "min_error")
+
+all_sims_report <- report %>% 
+  group_by(sim) %>% 
+  mutate(final_min_error = min(min_error)) %>% 
+  filter(error == final_min_error) %>%  
+  filter(row_number()==1) %>% 
+  #filter(min_error < 2) %>% 
+  arrange(min_error)
+
+all_sims_report <- all_sims_report[ , col_order]
+
+kable(all_sims_report) %>% 
+  kable_styling(latex_options = "striped") 
+
+all_sims_report <- all_sims_report %>% 
+  mutate(virions = get_fitness(paste0(basedir, "sim_", sim, "_gen_", gen, ".tsv"), 1200))
+
+```
+
+```{r}
+
+plot_reports(basedir, filedir, "test")
+plot_reports()
+```
+
+Initial thoughts  - 
+distribution is turning out ok .... which just means the fitting is good. HOWEVER the magnitudes are sometimes compeltely off...maybe with the significant increase in available ribosomes (200 --> 10,030) the strength of the promoter within the normal distribution ~N(e^12, e^3). 
+
+
+
+

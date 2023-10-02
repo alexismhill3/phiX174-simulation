@@ -1,0 +1,19 @@
+type_and_name,type,name,new_start,new_end
+promoter A,promoter,A,1,45
+terminator H,terminator,H,55,56
+gene A,gene,A,64,1605
+gene A*,gene,A*,751,1605
+promoter B,promoter,B1,818,863
+gene B,gene,B,1621,1983
+gene K,gene,K,1998,2168
+gene C,gene,C,2183,2443
+promoter D,promoter,D,2363,2408
+gene D,gene,D,2459,2917
+gene E,gene,E,2933,3208
+gene J,gene,J,3225,3341
+terminator J,terminator,J,3345,3346
+gene F,gene,F,3386,3753
+terminator F,terminator,F,3796,3797
+gene G,gene,G,3864,4391
+terminator G,terminator,G,4392,4393
+gene H,gene,H,4399,5385

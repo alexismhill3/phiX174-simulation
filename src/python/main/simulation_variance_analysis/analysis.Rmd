@@ -1,0 +1,62 @@
+### Libraries
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+```
+
+```{r}
+folder <- "simulation_variance_analysis"
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", folder, "/", sep="")
+```
+
+```{r}
+get_counts <- function(filedir){
+  counts <- data.frame()
+  batch <- 1:100
+
+  for(i in batch){
+     sim = read_tsv(paste0(filedir,"sim_11072022_13", "_gen_", i, ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == 500) %>% 
+       filter(species == "gene_A" | species == "gene_D") %>%
+       select(species, transcript)
+     sim$sim = i
+     counts <- rbind(counts, sim)}
+  return(counts)
+}
+```
+
+```{r}
+counts <- get_counts(filedir)
+```
+
+```{r}
+counts %>% 
+  filter(species == "gene_D") %>%
+  summarize(mean(transcript), sd(transcript), min(transcript), max(transcript))
+
+```
+
+```{r}
+samples = c(2, 5, 10, 20)
+mean_of_means <- data.frame()
+for(i in samples) {
+  tmp <- counts %>% 
+    filter(species == "gene_D") %>%
+    filter(sim <= i*10) %>%
+    group_by(group = (row_number() -1) %/% i) %>%
+    summarize(mean(transcript)) %>%
+    rename(mean = `mean(transcript)`) %>%
+    summarize(mean(`mean`), sd(`mean`), min(`mean`), max(`mean`)) 
+  tmp$n = i
+  mean_of_means <- rbind(mean_of_means, tmp)
+}
+mean_of_means <- mean_of_means %>%
+  rename(sd_mean = `sd(mean)`) %>%
+  rename(mean_mean = `mean(mean)`)
+mean_of_means
+
+mean_of_means %>% ggplot(aes(y = sd_mean, x = n)) +
+  geom_point()
+```
+

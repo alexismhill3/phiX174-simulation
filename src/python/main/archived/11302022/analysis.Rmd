@@ -1,0 +1,279 @@
+---
+title: "Analysis"
+author: "Alexis Hill"
+date: "11/06/2022"
+output: html_document
+---
+
+### Libraries
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+require(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(scales)
+require(kableExtra)
+```
+
+#### Summary
+Simulated decompressed phiX174 gene expression, using promoter and terminator values estimated from fitting the model to qPCR data. 
+
+Common Functions & Base directory 
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+# Functions & Variables I use a lot
+date <- "11302022"
+filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", date, "/", sep="")
+figdir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "figures/", sep="")
+
+# get_reports() retrieves the reports for all the simulation runs in a specified scenario
+# had hardcoded case for Scenario B where there is no simulation 1
+get_reports <- function(filedir){
+  report <- data.frame()
+   batch <- 1:20
+
+  
+  for(i in batch){
+     sim = read_csv(paste0(filedir, "", "sim_", i, "_report.csv")) 
+     sim$sim = i
+     report <- rbind(report, sim)}
+  return(report)
+}
+
+get_single_report <- function(filedir, sim){
+  return(read_csv(paste0(filedir, "", "sim_", sim, "_report.csv"))) 
+}
+
+best_gen <- function(filedir) {
+  get_reports(filedir) %>% 
+  group_by(sim) %>% 
+  mutate(final_min_error = min(min_error)) %>% 
+  filter(error == final_min_error) %>%  
+  filter(row_number()==1) %>% 
+  #filter(min_error < 2) %>% 
+  arrange(min_error)
+}
+
+# plot_reports() plots the RMSE v generations for all the simulations in a given scenario
+plot_reports <- function(filedir,  title){
+  x_scale <- c(0, 100, 200, 300, 400, 500)
+  
+  figure <- get_reports(filedir) %>% 
+    # filter(!is.na(gen)) %>% 
+    filter(gen > 0) %>% 
+    filter(error < 100) %>% 
+    ggplot(aes(x = gen)) +
+    geom_line(aes(y = error, color = "error"), color = "#CC79A7") + 
+    geom_line(aes(y = min_error, color = "min error"), color = "black") +
+    facet_wrap(~sim) + 
+    #ggtitle(title) + 
+    xlab("Generations") +
+    ylab("RMSE") + 
+    #ylim(c(1, 10)) + 
+    #scale_x_continuous(breaks = x_scale) + 
+    cowplot::theme_minimal_grid(12) + 
+    theme(axis.text.x = element_text(size=11, angle= -45))
+  
+  return(figure)
+}
+
+logel_plot <- function(filedir, sim, gen, timestamp){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(filedir,"sim_", sim, "_gen_", gen, "_ID_0", ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       #mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=transcript, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_y_continuous() + 
+       #scale_y_continuous(limits = c(0, 18),
+        #                  breaks = c(0,3,6,9,12,15,18)) +
+       scale_y_continuous(limits = c(0, 300)) +
+       ylab("")+
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+logel_plot_2 <- function(df){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- df %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       #mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=transcript, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_y_continuous() + 
+       #scale_y_continuous(limits = c(0, 18),
+        #                  breaks = c(0,3,6,9,12,15,18)) +
+       scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
+       ylab("Transcripts") +
+       xlab("genes") +
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+get_fitness <- function(file, timepoint){
+  
+  pt_run <- as.data.frame(read_tsv(file)) %>% 
+    mutate(time = round(time, 0)) %>% 
+    filter(time == timepoint) %>% 
+    filter(!str_detect(species, '__|bound|ecoli|promoter')) %>% 
+    mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                           "gene_K", "gene_C", "gene_D",
+                                           "gene_E", "gene_J", "gene_F",
+                                           "gene_G", "gene_H"),
+                                     c("A", "A*", "B", "K",
+                                           "C", "D", "E", "J",
+                                           "F", "G", "H"))) %>% 
+    filter(species %in% c("B", "D", "J", "F", "G", "H")) %>% 
+    select(-ribo_density, -transcript, -time) %>% 
+    mutate(copies = c(60, 240, 60, 60, 12, 60))  %>% # From Leuven 2020
+    mutate(stoich = protein/copies) %>%
+    summarise(virions = min(stoich))
+  
+  return(pt_run$virions[1])
+}
+
+logel_timeseries_with_pcr <- function(filedir, sim, gen1, gen2, gen3, timestamp) {
+  
+ 
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+  
+  sim_qpcr <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+                        normalized = c(17, 17, 102, 102, 102, 289, 289, 289, 187, 85, 17)) %>% 
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 300)) + 
+            #breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("Target (qPCR)") + 
+            ylab("Relative transcripts")+ 
+            xlab("ΦX174 genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  
+  sim_start <- logel_plot(filedir, sim, gen = gen1, timestamp = timestamp) + 
+               ggtitle(paste0("Generation ", gen1)) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  sim_middle <- logel_plot(filedir, sim, gen = gen2, timestamp = timestamp) + 
+                ggtitle(paste0("Generation ", gen2)) +
+                theme(plot.title = element_text(hjust = 0.5))
+  sim_end <- logel_plot(filedir, sim, gen = gen3, timestamp = timestamp) + 
+               ggtitle(paste0("Final", "")) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  
+  #title <- ggdraw() + draw_label(paste0("", "Simulated Transcription Patterns"))
+  
+  figure <- cowplot::plot_grid(sim_qpcr, sim_start, sim_middle, sim_end,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      #labels = c("A", "B", "", ""), 
+                      ncol = 4, nrow = 1)
+  
+  #figure <- plot_grid(panels, ncol=1, rel_heights=c(0.1, 1)) 
+               
+  return(figure)
+}
+
+transcripts_vs_time_plot <- function(filedir, sim, gen){
+  
+  my_palette = c("#d0a34f","#75c130", "#c12c04", "#ecd575", "#b69507",
+            "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa",
+            "#93c9ff")
+
+  figure <- read_tsv(paste0(filedir,"sim_", sim, "_gen_", gen, "_ID_0", ".tsv" )) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=time, y=transcript, color = species)) +
+       geom_line() + 
+       scale_color_manual(values = my_palette) + 
+       ylab("Transcript counts")+
+       cowplot::theme_cowplot(12)
+  
+  return(figure)
+}
+
+```
+
+
+```{r}
+# Get averages from decompressed simulation (5 replicates) and plot transcripts
+gen <- 3310
+sim_data <- data.frame()
+for(i in 1:5){
+     tmp <- read_tsv(paste0(filedir, "", i, "_gen_", gen, ".tsv")) %>%
+       mutate(time = round(time)) %>% 
+       filter(time == 500)
+     sim_data <- rbind(sim_data, tmp)}
+
+sim_data <- sim_data %>% 
+  group_by(species) %>%
+  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
+
+decomp <- logel_plot_2(sim_data) + ggtitle("Decompressed")
+```
+```{r}
+# Now get averages and plot WT simulation
+wt_path <- "/stor/scratch/Wilke/amh7958/phix174-simulation/output/11162022/"
+gen <- 3310
+sim_data_wt <- data.frame()
+for(i in 0:4){
+     tmp <- read_tsv(paste0(wt_path, "", "sim_18_gen_3310_ID_", i, ".tsv")) %>%
+       mutate(time = round(time)) %>% 
+       filter(time == 500)
+     sim_data_wt <- rbind(sim_data_wt, tmp)}
+
+sim_data_wt <- sim_data_wt %>% 
+  group_by(species) %>%
+  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
+
+wt <- logel_plot_2(sim_data_wt) + ggtitle("Wild type")
+```
+
+```{r}
+cowplot::plot_grid(wt, decomp, ncol = 2, nrow = 1)
+#ggsave("figures/wt_vs_decompressed_transcription_v1.png", width = 9, height = 5)
+```
+
+
+
