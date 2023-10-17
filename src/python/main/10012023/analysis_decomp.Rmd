@@ -1,7 +1,7 @@
 ---
 title: "Analysis"
 author: "Alexis Hill"
-date: "12/19/2022"
+date: "09/23/2023"
 output: html_document
 ---
 
@@ -21,11 +21,10 @@ Fit Logel proposed model (new prom & terminator in second gene grouping) to high
 Common Functions & Base directory 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
-date <- "12192022"
-filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", date, "/", sep="")
-figdir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "figures/", sep="")
+date <- "10012023"
+filedir <- paste("../../../../output/", date, "/", sep="")
 
-my_palette = c('#C27F7A', '#8C4C47', '#65AFCF', '#21819F', '#93D8F8', '#73B47E', '#398048', '#97D8A2', '#C994CE', '#A56EA9', '#EDB7F2')
+my_palette = c('#8C4C47', '#C27F7A', '#21819F', '#65AFCF', '#93D8F8', '#398048', '#73B47E', '#97D8A2', '#A56EA9', '#C994CE', '#EDB7F2')
 
 # get_reports() retrieves the reports for all the simulation runs in a specified scenario
 # had hardcoded case for Scenario B where there is no simulation 1
@@ -62,7 +61,7 @@ plot_reports <- function(filedir,  title){
   figure <- get_reports(filedir) %>% 
     # filter(!is.na(gen)) %>% 
     filter(gen > 0) %>% 
-    filter(error < 100) %>% 
+    filter(error < 10000) %>% 
     ggplot(aes(x = gen)) +
     geom_line(aes(y = error, color = "error"), color = "#CC79A7") + 
     geom_line(aes(y = min_error, color = "min error"), color = "black") +
@@ -127,6 +126,35 @@ logel_plot_2 <- function(df){
        scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
        ylab("") +
        xlab("genes") + 
+       cowplot::theme_cowplot(12) +
+       theme(legend.position = "none") 
+  
+  return(figure)
+}
+
+logel_plot_prot <- function(filedir, sim, gen, timestamp){
+
+  figure <- read_tsv(paste0(filedir,"sim_", sim, "_gen_", gen, "_ID_0", ".tsv" )) %>% 
+       mutate(time = round(time)) %>% 
+       filter(time == timestamp) %>% 
+       filter(!str_detect(species, '__|bound|ecoli|promoter|degraded')) %>% 
+       #mutate(normalized = transcript/transcript[1]) %>% 
+       mutate(species = factor(species, c("gene_A", "gene_A*", "gene_B",
+                                         "gene_K", "gene_C", "gene_D",
+                                         "gene_E", "gene_J", "gene_F",
+                                         "gene_G", "gene_H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+       ggplot(aes(x=species, y=protein, fill = species)) +
+       geom_bar(stat="identity", color = "black") + 
+       scale_fill_manual(values = my_palette) + 
+       #scale_y_continuous() + 
+       #scale_y_continuous(limits = c(0, 18),
+        #                  breaks = c(0,3,6,9,12,15,18)) +
+       scale_y_continuous(limits = c(0, 15000), expand = c(0,0)) +
+       ylab("Simulated protein")+
+       xlab("Genes")+ 
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -243,6 +271,62 @@ logel_timeseries_with_rnaseq <- function(filedir, sim, gen1, gen2, gen3, timesta
   return(figure)
 }
 
+timeseries_proteomics <- function(filedir, sim, gen1, gen2, gen3, timestamp) {
+  
+  sim_wt <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+            normalized = c(669.8, 573.4, 4266, 3630, 3450, 12403, 10480, 10219, 6826, 2875, 538)) %>%
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 15000), expand = c(0,0)) + 
+            #breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("WT") + 
+            ylab("Simulated protein")+ 
+            xlab("Genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  
+  sim_decomp <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
+            normalized = c(6698, 5734, 711, 605, 575, 12403, 10480, 10219, 6826, 2875, 538)) %>%
+            mutate(species = factor(species, c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"),
+                                       c("A", "A*", "B", "K",
+                                         "C", "D", "E", "J",
+                                         "F", "G", "H"))) %>% 
+            ggplot(aes(x=species, y=normalized, fill = species)) +
+            geom_bar(stat="identity", color = "black") + 
+            scale_fill_manual(values = my_palette) + 
+            scale_y_continuous(limits = c(0, 15000), expand = c(0,0)) + 
+            #breaks = c(0,3,6,9,12,15,18)) + 
+            ggtitle("Decompressed (pred.)") + 
+            ylab("Simulated protein")+ 
+            xlab("Genes")+ 
+            cowplot::theme_cowplot(12) +
+            theme(legend.position = "none",
+                  plot.title = element_text(hjust = 0.5)) 
+  
+  sim_end <- logel_plot_prot(filedir, sim, gen = gen3, timestamp = timestamp) + 
+               ggtitle(paste0("Decompressed (fit)", "")) + 
+               theme(plot.title = element_text(hjust = 0.5))
+  
+
+  figure <- cowplot::plot_grid(sim_wt, sim_decomp, sim_end,
+                      #label_x = "genes", label_y = "transcript abundances", 
+                      #labels = c("A", "B", "", ""), 
+                      ncol = 3, nrow = 1)
+  
+
+  return(figure)
+}
+
 exp_rnaseq <- function() {
   figure <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G", "H"),
                         normalized = c(27, 27, 120, 81, 123, 228, 201, 264, 231, 118, 76)) %>% 
@@ -312,7 +396,7 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
-plot_reports(filedir, "RNAseq")
+plot_reports(filedir, "Decompressed")
 ```
 
 ```{r}
@@ -321,229 +405,60 @@ best_gen_report
 ```
 
 ```{r}
-logel_timeseries_with_rnaseq(filedir, "7", "0", "500", "3878", 500)
-#ggsave("figures/fit_to_rnaseq_timeseries_short.png", width = 9, height = 3)
+decomp_sims <- timeseries_proteomics(filedir, "13", "0", "500", "3423", 500)
+decomp_sims
 ```
-
 ```{r}
-# pA/tH correlation with worst 6 fits removed
-pa_ph_corr <- best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
-        filter(final_min_error <= 24) %>%
-        ggplot(aes(x=pA, y=tH)) +
-         geom_point() + 
-         scale_x_continuous(trans = "log10") +
-         scale_y_continuous(trans = "log10") +
-         geom_smooth(method = lm) +
-         ylab("tH") +
-         cowplot::theme_cowplot(12) 
-```
-
-```{r}
-# Fitted parameter distributions - boxplots
-
-#prom_palette = c("#e7e6f7", "#aea3b0", "#d0d38f")
-prom_palette = c('#93D8F8', '#C27F7A', '#65AFCF', '#73B47E')
-#term_palette = c("#fadf7f", "#55d6be","#acfcd9","#7FDEFF")
-term_palette = c('#65AFCF', '#C994CE', '#A56EA9', '#EDB7F2', '#97D8A2')
-
-promoter_dist <- best_gen_report %>% 
-  filter(final_min_error <= 24) %>%
-  select(-1:-2, -12:-15) %>%
+promoter_dist_2 <- best_gen_report %>% 
+  #filter(final_min_error <= 2.8) %>%
+  select(-1:-2, -10:-13) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
-  filter(element %in% c("pA", "pB", "pD", "btss49")) %>%
-  ggplot(aes(x=fct_relevel(element, "pD", "btss49", "pB", "pA"), y=strength, fill=element)) +
-    geom_boxplot() +
-    scale_y_continuous(limits = c(0, 40)) +
-    scale_fill_manual(values = prom_palette) +
-    ylab(expression("strength" ~ 
-                         (10^{6} ~ M^{-1} ~ s^{-1})
-                       )) +
-    xlab("element") +
-    cowplot::theme_cowplot(11) +
-    background_grid() +
-    panel_border() +
-    theme(legend.position = "none") +
-    coord_flip()
-
-terminator_dist <- best_gen_report %>% 
-  filter(final_min_error <= 24) %>%
-  select(-1:-2, -12:-15) %>%
-  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
-  filter(element %in% c("RUT3", "tF", "tG", "tJ", "tH")) %>%
-  ggplot(aes(x=fct_relevel(element, "tH", "tG", "tF", "tJ", "RUT3"), y=strength, fill=element)) +
-    geom_boxplot() +
-    scale_y_continuous(limits = c(0, 1)) +
-    scale_fill_manual(values = term_palette) +
-    ylab("termination probability") +
-    xlab("element") +
-    cowplot::theme_cowplot(11) +
-    background_grid() +
-    panel_border() +
-    theme(legend.position = "none") +
-    coord_flip()
-
-boxplots <- cowplot::plot_grid(promoter_dist, terminator_dist,
-                      #label_x = "genes", label_y = "transcript abundances", 
-                      #labels = c("A", "B", "", ""), 
-                      ncol = 1, nrow = 2)
-cowplot::plot_grid(boxplots, pa_ph_corr,
-                      #label_x = "genes", label_y = "transcript abundances", 
-                      #labels = c("A", "B", "", ""), 
-                      ncol = 2, nrow = 1)
-#ggsave("figures/estimated_parameter_distributions_all.png", width = 9, height = 5)
-```
-```{r}
-best_gen_report_original_model <- read_csv("../01222023/best_gen_report_rnaseq_original.csv")
-```
-
-```{r}
-prom_new <- best_gen_report %>% 
-  ungroup() %>%
-  filter(final_min_error <= 24) %>%
-  select(3:6, 14) %>%
-  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
-  mutate(model = "Logel")
-  
-prom_orig <- best_gen_report_original_model %>%
-  ungroup() %>%
-  select(3:5, 12) %>%
-  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
-  mutate(model = "original")
-
-
-prom_all <- bind_rows(prom_orig, prom_new)
-#prom_all$model <- factor(prom_all$model, levels=c("original", "Logel"))
-prom_all %>%
-  ggplot(aes(x=element, y=strength, fill=model)) +
-    geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
-    scale_y_continuous(limits = c(0, 20)) +
-    ylab(expression("strength" ~ 
-                         (10^{6} ~ M^{-1} ~ s^{-1})
-                       )) +
-    xlab("") +
-    cowplot::theme_cowplot(11) +
-    background_grid() +
-    panel_border()
-    #theme(legend.position = "none")
-#ggsave("figures/prom_estimates.png", width = 9, height = 3)
-```
-
-```{r}
-term_new <- best_gen_report %>% 
-  ungroup() %>%
-  filter(final_min_error <= 24) %>%
-  select(7:11, 14) %>%
-  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
-  mutate(model = "Logel")
-  
-term_orig <- best_gen_report_original_model %>%
-  ungroup() %>%
-  select(6:9, 12) %>%
-  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
-  mutate(model = "original")
-
-
-term_all <- bind_rows(term_new, term_orig)
-term_all %>%
-  ggplot(aes(x=element, y=strength, fill=model)) +
-    geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
-    scale_y_continuous(limits = c(0, 1)) +
-    ylab("termination efficiency") +
-    xlab("") +
-    cowplot::theme_cowplot(11) +
-    background_grid() +
-    panel_border()
-    #theme(legend.position = "none")
-#ggsave("figures/term_estimates.png", width = 9, height = 3)
-```
-```{r}
-prom_all %>%
-  ggplot(aes(x=element, y=strength, fill=model)) +
-    geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
-    scale_y_continuous(limits = c(0, 20)) +
-    scale_fill_manual(values = c("#876B6E", "#beaec0")) +
-    ylab(expression("strength" ~ 
-                         (10^{6} ~ M^{-1} ~ s^{-1})
-                       )) +
-    xlab("") +
-    cowplot::theme_cowplot(11) +
-    background_grid() +
-    panel_border()
-    #theme(legend.position = "none")
-```
-```{r}
-prom <- prom_all %>%
-  ggplot(aes(x=fct_relevel(element, "pA", "pB", "btss49", "pD"), y=strength, fill=model)) +
-    geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
-    scale_y_continuous(limits = c(0, 20), expand = expansion(mult = c(0, 0))) +
-    scale_fill_manual(values = c("#876B6E", "#94d7be")) +
-    ylab(expression("binding strength" ~ 
-                         (10^{6} ~ M^{-1} ~ s^{-1})
-                       )) +
-    xlab("") +
-    theme_minimal() +
-    background_grid() +
-    panel_border(color = "gray40")
-
-term <- term_all %>%
-  ggplot(aes(x=fct_relevel(element, "RUT3", "tJ", "tF", "tG", "tH"), y=strength, fill=model)) +
-    geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
-    scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) +
-    scale_fill_manual(labels = c("+ btss49, RUT3  ", "- btss49, RUT3"), values = c("#876B6E", "#94d7be")) +
-    ylab("termination efficiency (%)") +
-    xlab("") +
-    theme_minimal() +
-    background_grid() +
-    panel_border(color = "gray40")
-
-row <- cowplot::plot_grid(prom + theme(legend.position = "none"),
-                          term + theme(legend.position = "none"),
-                          align = "vh",
-                          nrow = 2,
-                          labels = c("A", "B"))
-
-legend <- get_legend(
-  # create some space to the left of the legend
-  #term + theme(legend.box.margin = margin(0, 0, 0, 12))
-  term + 
-    guides(fill = guide_legend(nrow = 1, direction = "horizontal")) +
-    theme(legend.position = c(.98, .98), 
-          legend.justification = c(1, 1),
-          plot.margin = margin(7, 7, 0, 7, "pt")) +
-    labs(fill = "Model ")
-)
-
-cowplot::plot_grid(legend, row, ncol = 1, rel_heights = c(0.05, 1))
-ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 6.5)
-```
-
-```{r}
-logel_model <- best_gen_report %>% 
-  select(final_min_error) %>%
-  mutate(Model = "+ btss49, RUT3")
-
-original_model <- best_gen_report_original_model %>%
-  select(final_min_error) %>%
-  mutate(Model = "- btss49, RUT3")
-
-rmse <- bind_rows(logel_model, original_model)
-
-rmse %>% ggplot(aes(x = Model, y = final_min_error)) +
-  geom_boxplot(fill = "gray70") +
-  scale_y_continuous(limits = c(0, 45),
-                     expand = expansion(mult = c(0, 0)),
-                     name = "Final RMSE") +
+  filter(element %in% c("pA", "pB", "pD")) %>%
+  ggplot(aes(x=fct_relevel(element, "pA", "pB", "pD"), y=strength)) +
+  geom_boxplot(fill = "gray67") +
+  geom_point(data = data.frame(x = c("pA","pB","pD"), y = c(11.32, 3.34, 34.37)),
+             aes(x=x, y=y),
+             color = 'lightblue', fill = 'lightblue',
+             shape = 23, size = 2) +
+  scale_y_continuous(limits = c(0, 40), expand = expansion(mult = c(0, 0))) +
+  scale_fill_manual(values = prom_palette) +
+  ylab("Binding strength") +
+  #ylab(expression("binding strength" ~ 
+  #                  (10^{6} ~ M^{-1} ~ s^{-1})
+  #)) +
+  xlab(NULL) +
   theme_minimal() +
-  background_grid() +
   panel_border(color = "gray40") +
-  coord_flip()
-ggsave("paper_figures/final_rmse_plot.png", width = 8, height = 4)
-```
-```{r}
-best_gen_report %>% 
-  ungroup() %>% 
-  filter(final_min_error <= 24) %>% 
-  summarise(across(everything(), list(mean)))
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank())
+
+terminator_dist_2 <- best_gen_report %>% 
+  #filter(final_min_error <= 2.8) %>%
+  select(-1:-2, -10:-13) %>%
+  pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
+  filter(!element %in% c("pA", "pB", "pD")) %>%
+  ggplot(aes(x=fct_relevel(element, "tJ", "tF", "tG", "tH"), y=strength)) +
+  geom_boxplot(fill = "gray67") +
+  geom_point(data = data.frame(x = c("tJ","tF","tG", "tH"), y = c(0.34, 0.51, 0.78, 0.93)),
+             aes(x=x, y=y),
+             color = 'lightblue', fill = 'lightblue',
+             shape = 23, size = 2) +
+  scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) +
+  scale_fill_manual(values = term_palette) +
+  ylab("Termination efficiency") +
+  xlab(NULL) +
+  theme_minimal() +
+  panel_border(color = "gray40") +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank())
+
+decomp_dists <- cowplot::plot_grid(promoter_dist_2, terminator_dist_2,
+                  #label_x = "genes", label_y = "transcript abundances", 
+                  labels = c("A", "B"), 
+                  ncol = 2, nrow = 1, align = "h")
+
+cowplot::plot_grid(decomp_dists, decomp_sims, labels = c("", "C"), nrow = 2)
+ggsave("paper_figures/decomp_S5.png", width = 9, height = 5)
 ```
 
 

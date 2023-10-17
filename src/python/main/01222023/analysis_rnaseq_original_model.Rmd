@@ -15,14 +15,13 @@ require(kableExtra)
 ```
 
 #### Summary
-Fit original regulatory model (3 promoters & 4 terminators) to higher resolution data RNA-seq data
+Fit original regulatory model (3 promoters & 4 terminators) to higher resolution RNA-seq data
 
 Common Functions & Base directory 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
 date <- "01222023"
-filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", date, "/", sep="")
-figdir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "figures/", sep="")
+filedir <- paste("../../../../output/", date, "/", sep="")
 
 my_palette = c("#d0a34f", "#75c130", "#c12c04", "#ecd575", "#b69507", "#e37c71", "#adcb40", "#d3ad40", "#288ede", "#a5bdfa", "#93c9ff")
 #my_palette = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FFFF99", "#E31A1C", "#FDBF6F", "#FF7F00", "#CAB2D6", "#6A3D9A", "#999999")

@@ -1,4 +1,4 @@
 species,protein_wt,protein_decomp,fold_change,experiment
-gene_A*,,,3.2,proteomics (Wright et al.)
-gene_B,,,-2.4,proteomics (Wright et al.)
-gene_C,,,-2.7,proteomics (Wright et al.)
+gene_A*,,,9.4,proteomics (Wright et al.)
+gene_B,,,-6.4,proteomics (Wright et al.)
+gene_C,,,-6.8,proteomics (Wright et al.)
