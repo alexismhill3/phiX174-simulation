@@ -1,0 +1,6 @@
+python3 phix_circular.py estimated_params "/stor/scratch/Wilke/amh7958/phix174-simulation/" "output/" 0.8051313 0.9287955
+python3 phix_linear.py estimated_params "/stor/scratch/Wilke/amh7958/phix174-simulation/" "output/" 0.8051313 0.9287955
+python3 phix_circular.py tG_0.5 "/stor/scratch/Wilke/amh7958/phix174-simulation/" "output/" 0.5 0.9287955 &
+python3 phix_linear.py tG_0.5 "/stor/scratch/Wilke/amh7958/phix174-simulation/" "output/" 0.5 0.9287955 &
+python3 phix_circular.py pA_0.1 "/stor/scratch/Wilke/amh7958/phix174-simulation/" "output/" 0.5 0.5 &
+python3 phix_linear.py pA_0.1 "/stor/scratch/Wilke/amh7958/phix174-simulation/" "output/" 0.5 0.5 &

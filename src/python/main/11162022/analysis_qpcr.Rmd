@@ -15,14 +15,13 @@ require(kableExtra)
 ```
 
 #### Summary
-Copy of the original analysis file from this folder, for messing around with plots for my proposal.
+Fit original regulatory model (3 promoters & 4 terminators) to qPCR data
 
 Common Functions & Base directory 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
 date <- "11162022"
-filedir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", date, "/", sep="")
-figdir <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/src/python/main/", date, "/", "figures/", sep="")
+filedir <- paste("../../../../output/", date, "/", sep="")
 
 #my_palette = c('#2B6861', '#ADDED7', '#601023', '#B26A74', '#F8ADB7', '#3E6446', '#85A98C', '#CAEED1', '#42357A', '#7B71B0', '#BAB1F0')
 my_palette = c('#8C4C47', '#C27F7A', '#21819F', '#65AFCF', '#93D8F8', '#398048', '#73B47E', '#97D8A2', '#A56EA9', '#C994CE', '#EDB7F2')
@@ -253,16 +252,11 @@ time_stamp <- 500
 ```
 
 ```{r}
-get_single_report(filedir, sim_num)
-transcripts_vs_time_plot(filedir, sim_num, best_gen)
-```
-
-```{r}
 sim_18_timeseries <- logel_timeseries_with_pcr(filedir, sim_num, "0", "415", "3310", time_stamp)
 sim_18_rmse <- plot_single_rmse(filedir, sim_num) + panel_border()
 
 cowplot::plot_grid(sim_18_timeseries, sim_18_rmse, ncol = 1, rel_heights = c(0.35, 0.35), labels = c("A", "B"))
-ggsave("grant_figures/timeseries_sim_18_short.png", width = 9, height = 4.5)
+ggsave("paper_figures/timeseries_sim_18_short.png", width = 9, height = 4.5)
 ```
 ```{r}
 # pA/tH correlation for all data
