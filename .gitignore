@@ -5,3 +5,5 @@
 output/
 env/
 env-2/
+.ipynb_checkpoints
+.Rhistory:
