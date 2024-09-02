@@ -250,6 +250,7 @@ sim_decomp <- sim_data %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
 decomp <- logel_plot_2(sim_decomp) + ggtitle("Decompressed")
+decomp
 ```
 ```{r}
 # Now get averages and plot WT simulation
@@ -289,24 +290,25 @@ decomp <- left_join(sim_wt_prot_only, sim_decomp_prot_only) %>%
 
 wright_data <- read_csv("wright_decompressed_proteomics.csv") 
 comp <- rbind(decomp, wright_data) %>%
-  mutate(species = recode(species, `gene_A*` = "protein A*", gene_B = "protein B", gene_C = "protein C")) %>%
+  mutate(species = recode(species, `gene_A*` = "Protein A*", gene_B = "Protein B", gene_C = "Protein C")) %>%
   mutate(experiment = recode(experiment, `proteomics (Wright et al.)` = "proteomics")) %>%
   select(c("species", "fold_change", "experiment"))
 comp
 
-comp %>% ggplot(aes(x=experiment, y=fold_change, fill=experiment)) +
-  geom_col() +
-  facet_wrap(~species) +
-  scale_x_discrete(breaks = NULL,
-                  name = element_blank()) +
-  scale_y_continuous(name = "Protein fold change relative to wild-type") +
-  scale_fill_manual(values = c('#7892BB', '#9499A2')) +
+comp %>% ggplot(aes(x=species, y=fold_change, fill=experiment)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.65) +
+  #facet_wrap(~species) +
+  scale_x_discrete(name = element_blank()) +
+  scale_y_continuous(name = "Fold change relative to wild-type", limits = c(-10, 10), expand = expansion(mult = c(0, 0))) +
+  #scale_fill_manual(values = c('#7892BB', '#9499A2')) +
+  scale_fill_manual(values = c('#7892bc', '#e28743')) +
   theme_bw() +
   background_grid() +
-  panel_border(color = "gray70") +
-  theme(legend.title = element_blank())
+  panel_border(color = "gray40") +
+  theme(legend.title = element_blank()) +
+  geom_hline(yintercept=0)
 
-ggsave("paper_figures/decomp_proteomics_vs_sim.png", width = 8, height = 4)
+ggsave("paper_figures/decomp_proteomics_vs_sim.png", width = 6, height = 4)
 ```
 
 

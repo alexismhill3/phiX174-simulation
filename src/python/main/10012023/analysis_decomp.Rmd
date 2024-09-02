@@ -286,7 +286,7 @@ timeseries_proteomics <- function(filedir, sim, gen1, gen2, gen3, timestamp) {
             scale_fill_manual(values = my_palette) + 
             scale_y_continuous(limits = c(0, 15000), expand = c(0,0)) + 
             #breaks = c(0,3,6,9,12,15,18)) + 
-            ggtitle("WT") + 
+            ggtitle(expression("WT")) + 
             ylab("Simulated protein")+ 
             xlab("Genes")+ 
             cowplot::theme_cowplot(12) +
@@ -306,7 +306,7 @@ timeseries_proteomics <- function(filedir, sim, gen1, gen2, gen3, timestamp) {
             scale_fill_manual(values = my_palette) + 
             scale_y_continuous(limits = c(0, 15000), expand = c(0,0)) + 
             #breaks = c(0,3,6,9,12,15,18)) + 
-            ggtitle("Decompressed (pred.)") + 
+            ggtitle(expression("Decompressed (pred.)")) + 
             ylab("Simulated protein")+ 
             xlab("Genes")+ 
             cowplot::theme_cowplot(12) +
@@ -314,7 +314,7 @@ timeseries_proteomics <- function(filedir, sim, gen1, gen2, gen3, timestamp) {
                   plot.title = element_text(hjust = 0.5)) 
   
   sim_end <- logel_plot_prot(filedir, sim, gen = gen3, timestamp = timestamp) + 
-               ggtitle(paste0("Decompressed (fit)", "")) + 
+               ggtitle(expression("Decompressed (fit)")) + 
                theme(plot.title = element_text(hjust = 0.5))
   
 
@@ -409,6 +409,9 @@ decomp_sims <- timeseries_proteomics(filedir, "13", "0", "500", "3423", 500)
 decomp_sims
 ```
 ```{r}
+promA <- expression(italic("pA")); promB <- expression(italic("pB")); promD <- expression(italic("pD"))
+tJ <- expression("T"["J"]); tF <- expression("T"["F"]); tG <- expression("T"["G"]); tH <- expression("T"["H"]);
+
 promoter_dist_2 <- best_gen_report %>% 
   #filter(final_min_error <= 2.8) %>%
   select(-1:-2, -10:-13) %>%
@@ -422,6 +425,7 @@ promoter_dist_2 <- best_gen_report %>%
              shape = 23, size = 2) +
   scale_y_continuous(limits = c(0, 40), expand = expansion(mult = c(0, 0))) +
   scale_fill_manual(values = prom_palette) +
+  #scale_x_discrete(labels = c(promA, promB, promD)) +
   ylab("Binding strength") +
   #ylab(expression("binding strength" ~ 
   #                  (10^{6} ~ M^{-1} ~ s^{-1})
@@ -445,6 +449,7 @@ terminator_dist_2 <- best_gen_report %>%
              shape = 23, size = 2) +
   scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) +
   scale_fill_manual(values = term_palette) +
+  scale_x_discrete(labels = c(tJ, tF, tG, tH)) +
   ylab("Termination efficiency") +
   xlab(NULL) +
   theme_minimal() +

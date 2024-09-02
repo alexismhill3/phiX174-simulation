@@ -123,8 +123,8 @@ logel_plot_2 <- function(df){
        #scale_y_continuous(limits = c(0, 18),
         #                  breaks = c(0,3,6,9,12,15,18)) +
        scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
-       ylab("Transcripts") +
-       xlab("genes") +
+       ylab("Simulated transcripts") +
+       xlab("Genes") +
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -221,6 +221,10 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 
 
 ```{r}
+label_1 <- expression("pA"*"–"*"T"["H"]~"(WT),"~"pA = 8.44")
+label_2 <- expression("T"["H"]*"–"*"pA,"~"pA = 8.44")
+label_3 <- expression("T"["H"]*"–"*"pA,"~"pA = 0.5")
+
 # Get averages from swaped pA/tH (5 replicates) and plot transcripts
 sim_data <- data.frame()
 for(i in 0:4){
@@ -233,7 +237,7 @@ sim_swap <- sim_data %>%
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-swap <- logel_plot_2(sim_swap) + ggtitle("tH-pA, pA = 8.44")
+swap <- logel_plot_2(sim_swap) + ggtitle(label_2)
 
 sim_data <- data.frame()
 for(i in 0:4){
@@ -246,7 +250,7 @@ sim_swap_1 <- sim_data %>%
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-swap_1 <- logel_plot_2(sim_swap_1) + ggtitle("tH-pA, pA = 0.5")
+swap_1 <- logel_plot_2(sim_swap_1) + ggtitle(label_3)
 ```
 ```{r}
 # Now get averages and plot WT simulation
@@ -261,7 +265,8 @@ sim_wt <- sim_data_wt %>%
   group_by(species) %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
-wt <- logel_plot_2(sim_wt) + ggtitle("pA-tH (wt), pA = 8.44")
+#wt <- logel_plot_2(sim_wt) + ggtitle("pA-tH (wt), pA = 8.44")
+wt <- logel_plot_2(sim_wt) + labs(title=label_1)
 ```
 
 ```{r}

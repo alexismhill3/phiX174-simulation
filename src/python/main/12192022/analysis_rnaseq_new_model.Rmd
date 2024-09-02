@@ -313,16 +313,25 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
+# plot RMSE curves for each trial
 plot_reports(filedir, "RNAseq")
 ```
 
 ```{r}
-best_gen_report <- best_gen(filedir)
-best_gen_report
+#best_gen_report <- best_gen(filedir)
+#write_csv(best_gen_report, "best_gen_report_putative_rnaseq.csv")
 ```
 
+### If raw data is not available, start here
+
 ```{r}
-logel_timeseries_with_rnaseq(filedir, "7", "0", "500", "3878", 500)
+best_gen_report <- read_csv("best_gen_report_putative_rnaseq.csv")
+```
+
+
+```{r}
+local_fildir <- "output/" # simulation files for plotting have been copied here
+logel_timeseries_with_rnaseq(local_fildir, "7", "0", "500", "3878", 500)
 #ggsave("figures/fit_to_rnaseq_timeseries_short.png", width = 9, height = 3)
 ```
 
@@ -349,7 +358,7 @@ term_palette = c('#65AFCF', '#C994CE', '#A56EA9', '#EDB7F2', '#97D8A2')
 
 promoter_dist <- best_gen_report %>% 
   filter(final_min_error <= 24) %>%
-  select(-1:-2, -12:-15) %>%
+  select(pA, pB, btss49, pD, RUT3, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("pA", "pB", "pD", "btss49")) %>%
   ggplot(aes(x=fct_relevel(element, "pD", "btss49", "pB", "pA"), y=strength, fill=element)) +
@@ -368,7 +377,7 @@ promoter_dist <- best_gen_report %>%
 
 terminator_dist <- best_gen_report %>% 
   filter(final_min_error <= 24) %>%
-  select(-1:-2, -12:-15) %>%
+  select(pA, pB, btss49, pD, RUT3, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("RUT3", "tF", "tG", "tJ", "tH")) %>%
   ggplot(aes(x=fct_relevel(element, "tH", "tG", "tF", "tJ", "RUT3"), y=strength, fill=element)) +
@@ -516,7 +525,7 @@ legend <- get_legend(
 )
 
 cowplot::plot_grid(legend, row, ncol = 1, rel_heights = c(0.05, 1))
-ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 6.5)
+#ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 6.5)
 ```
 
 
@@ -540,7 +549,7 @@ rmse %>% ggplot(aes(x = Model, y = final_min_error)) +
   background_grid() +
   panel_border(color = "gray40") +
   coord_flip()
-ggsave("paper_figures/final_rmse_plot.png", width = 8, height = 4)
+#ggsave("paper_figures/final_rmse_plot.png", width = 8, height = 4)
 ```
 ```{r}
 best_gen_report %>% 
@@ -569,8 +578,9 @@ rnaseq <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G"
           theme(legend.position = "none",) #plot.title = element_text(hjust = 0.5)) 
 
 df_cryptic <- data.frame()
+
 for(i in 0:4){
-     tmp <- read_tsv(paste0(filedir, "/sim_7_gen_3878_ID_", i, ".tsv")) %>%
+     tmp <- read_tsv(paste0(local_fildir, "/sim_7_gen_3878_ID_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
      df_cryptic <- rbind(df_cryptic, tmp)}
@@ -582,10 +592,10 @@ df_cryptic <- df_cryptic %>%
 plot_cryptic <- logel_plot_2(df_cryptic) + 
                ggtitle("+ BTSS, RUT3")
 
-fildir_canonical <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", "01222023", "/", sep="")
+#fildir_canonical <- paste("/stor/scratch/Wilke/amh7958/phix174-simulation/output/", "01222023", "/", sep="")
 df_canonical <- data.frame()
 for(i in 0:4){
-     tmp <- read_tsv(paste0(fildir_canonical, "/sim_15_gen_2467_ID_", i, ".tsv")) %>%
+     tmp <- read_tsv(paste0(local_fildir, "/sim_15_gen_2467_ID_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
      df_canonical <- rbind(df_canonical, tmp)}
@@ -598,14 +608,14 @@ plot_canonical <- logel_plot_2(df_canonical) +
                ggtitle("- BTSS, RUT3")
 
 cowplot::plot_grid(rnaseq, plot_cryptic, plot_canonical, nrow = 1)
-ggsave("paper_figures/fitted_sims_both_models.png", width = 9, height = 3)
+#ggsave("paper_figures/fitted_sims_both_models.png", width = 9, height = 3)
 ```
 ```{r}
 row <- cowplot::plot_grid(prom + theme(legend.position = "none"), term, nrow = 1, rel_widths = c(0.45, 0.65))
 
 row
 #cowplot::plot_grid(row, legend, ncol = 2, rel_widths = c(1, 0.1))
-ggsave("paper_figures/rnaseq_estimates_horizontal.png", width = 9, height = 3)
+#ggsave("paper_figures/rnaseq_estimates_horizontal.png", width = 9, height = 3)
 ```
 
 

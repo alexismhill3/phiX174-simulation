@@ -77,10 +77,10 @@ plot_reports <- function(filedir,  title){
   return(figure)
 }
 
-plot_single_rmse <- function(filedir, sim){
+plot_single_rmse <- function(report){
   x_scale <- c(0, 100, 200, 300, 400, 500)
   
-  figure <- get_single_report(filedir, sim) %>% 
+  figure <- report %>% 
     # filter(!is.na(gen)) %>% 
     filter(gen > 0) %>% 
     filter(error < 100) %>% 
@@ -237,26 +237,34 @@ ggsave("figures/rmse_curves.png", width = 9, height = 5)
 ```
 
 ```{r}
-best_gen_report <- best_gen(filedir)
+#best_gen_report <- best_gen(filedir)
+#write_csv(best_gen_report, "best_gen_report_original_qpcr.csv")
+```
+
+### If raw data is not available, start here
+
+```{r}
+best_gen_report <- read_csv("best_gen_report_original_qpcr.csv")
 best_gen_report
 ```
-```{r}
-write_csv(best_gen_report, "best_gen_report_original_qpcr.csv")
-```
 
 ```{r}
-# parameters of the fit/simulation that produced the lowest RMSE
+# parameters of the fit/simulation that produced the lowest RMSE (from best_gen_report)
 sim_num <- "18"
 best_gen <- "3310"
-time_stamp <- 500
+time_stamp <- "500"
 ```
 
 ```{r}
-sim_18_timeseries <- logel_timeseries_with_pcr(filedir, sim_num, "0", "415", "3310", time_stamp)
-sim_18_rmse <- plot_single_rmse(filedir, sim_num) + panel_border()
+local_filedir <- "output/" # simulation files for plotting have been copied here
+
+#write_csv(get_single_report(filedir, sim_num), "sim_18_report.csv")
+sim_18_report <- read_csv("sim_18_report.csv")
+sim_18_rmse <- plot_single_rmse(sim_18_report) + panel_border()
+sim_18_timeseries <- logel_timeseries_with_pcr(local_filedir, sim_num, "0", "415", "3310", time_stamp)
 
 cowplot::plot_grid(sim_18_timeseries, sim_18_rmse, ncol = 1, rel_heights = c(0.35, 0.35), labels = c("A", "B"))
-ggsave("paper_figures/timeseries_sim_18_short.png", width = 9, height = 4.5)
+#ggsave("paper_figures/timeseries_sim_18_short.png", width = 9, height = 4.5)
 ```
 ```{r}
 # pA/tH correlation for all data
@@ -282,6 +290,7 @@ pa_ph_corr <- best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
   theme_classic()
 #ggsave("figures/pA_pH_correlation_short.png", width = 3, height = 5)
 ```
+
 ```{r}
 # Fitted parameter distributions - boxplots
 
@@ -292,7 +301,7 @@ term_palette = c('#A56EA9', '#C994CE', '#EDB7F2', '#97D8A2')
 
 promoter_dist <- best_gen_report %>% 
   filter(final_min_error <= 2.8) %>%
-  select(-1:-2, -10:-13) %>%
+  select(pA, pB, pD, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=fct_relevel(element, "pD", "pB", "pA"), y=strength, fill=element)) +
@@ -311,7 +320,7 @@ promoter_dist <- best_gen_report %>%
 
 terminator_dist <- best_gen_report %>% 
   filter(final_min_error <= 2.8) %>%
-  select(-1:-2, -10:-13) %>%
+  select(pA, pB, pD, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(!element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=fct_relevel(element, "tH", "tG", "tF", "tJ"), y=strength, fill=element)) +
@@ -334,7 +343,7 @@ cowplot::plot_grid(boxplots, pa_ph_corr,
                    #label_x = "genes", label_y = "transcript abundances", 
                    #labels = c("A", "B", "", ""), 
                    ncol = 2, nrow = 1)
-ggsave("grant_figures/estimated_parameter_distributions_all.png", width = 7, height = 4)
+#ggsave("grant_figures/estimated_parameter_distributions_all.png", width = 7, height = 4)
 ```
 
 ```{r}
@@ -344,23 +353,28 @@ cowplot::plot_grid(promoter_dist, terminator_dist,
                    ncol = 2, nrow = 1)
 #ggsave("figures/estimated_parameter_distributions.png", width = 6, height = 4)
 ```
+
 ```{r}
 pa_ph_corr
 #ggsave("figures/pa_ph_correlation.png", width = 6, height = 4)
 ```
 
 ```{r}
+#promA <- expression(italic("pA")); promB <- expression(italic("pB")); promD <- expression(italic("pD"))
+tJ <- expression("T"["J"]); tF <- expression("T"["F"]); tG <- expression("T"["G"]); tH <- expression("T"["H"]);
 
 promoter_dist_2 <- best_gen_report %>% 
   filter(final_min_error <= 2.8) %>%
-  select(-1:-2, -10:-13) %>%
+  select(pA, pB, pD, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("pA", "pB", "pD")) %>%
+  #mutate(across('element', str_replace, 'pA', promA)) %>%
   ggplot(aes(x=fct_relevel(element, "pA", "pB", "pD"), y=strength)) +
   geom_boxplot(fill = "gray67") +
   scale_y_continuous(limits = c(0, 40), expand = expansion(mult = c(0, 0))) +
+  #scale_x_discrete(labels = c(promA, promB, promD)) +
   scale_fill_manual(values = prom_palette) +
-  ylab(expression("binding strength" ~ 
+  ylab(expression("Binding strength" ~ 
                     (10^{6} ~ M^{-1} ~ s^{-1})
   )) +
   xlab(NULL) +
@@ -371,14 +385,15 @@ promoter_dist_2 <- best_gen_report %>%
 
 terminator_dist_2 <- best_gen_report %>% 
   filter(final_min_error <= 2.8) %>%
-  select(-1:-2, -10:-13) %>%
+  select(pA, pB, pD, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(!element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=fct_relevel(element, "tJ", "tF", "tG", "tH"), y=strength)) +
   geom_boxplot(fill = "gray67") +
   scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) +
+  scale_x_discrete(labels = c(tJ, tF, tG, tH)) +
   scale_fill_manual(values = term_palette) +
-  ylab("termination efficiency (%)") +
+  ylab("Termination efficiency (%)") +
   xlab(NULL) +
   theme_minimal() +
   panel_border(color = "gray40") +
@@ -386,7 +401,8 @@ terminator_dist_2 <- best_gen_report %>%
         panel.grid.minor.x = element_blank())
 
 
-logel <- logel_timeseries_with_pcr(filedir, sim_num, "0", "415", best_gen, time_stamp)
+#logel <- logel_timeseries_with_pcr(local_filedir, sim_num, "0", "415", best_gen, time_stamp)
+logel <- sim_18_timeseries
 estimates <- cowplot::plot_grid(promoter_dist_2, terminator_dist_2, pa_ph_corr,
                                 #label_x = "genes", label_y = "transcript abundances", 
                                 labels = c("B", "", "C"), 
@@ -408,15 +424,17 @@ pa_ph_corr_v2 <- best_gen_report %>% mutate(tH_mut = 1 - tH) %>%
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10") +
   geom_smooth(method = lm, color = "#23433B") +
-  ylab("tH") +
+  xlab("pA") +
+  ylab(tH) +
   theme_classic() +
   panel_border()
 
 cowplot::plot_grid(promoter_dist_2, terminator_dist_2, pa_ph_corr_v2,
                   labels = c("A", "B", "C"), 
                   ncol = 3, nrow = 1, align = "h")
-ggsave("paper_figures/qpcr_estimates_and_scatter_v1.png", width = 9, height = 3)
+#ggsave("paper_figures/qpcr_estimates_and_scatter_v1.png", width = 9, height = 3)
 ```
+
 ```{r}
 best_gen_report %>% 
   ungroup() %>% 
@@ -424,21 +442,6 @@ best_gen_report %>%
   summarise(across(everything(), list(mean)))
 ```
 
-```{r}
-best_fit <- data.frame()
-for(i in 0:4){
-     tmp <- read_tsv(paste0(filedir, "/sim_18_gen_3310_ID_", i, ".tsv")) %>%
-       mutate(time = round(time)) %>% 
-       filter(time == 500)
-     best_fit <- rbind(best_fit, tmp)}
-
-best_fit <- best_fit %>% 
-  group_by(species) %>%
-  summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
-best_fit
-
-write_csv(best_fit, "fitted_qpcr_output.csv")
-```
 
 
 

@@ -125,7 +125,7 @@ logel_plot_2 <- function(df){
         #                  breaks = c(0,3,6,9,12,15,18)) +
        scale_y_continuous(limits = c(0, 300), expand = c(0,0)) +
        ylab("") +
-       xlab("genes") + 
+       xlab("Genes") + 
        cowplot::theme_cowplot(12) +
        theme(legend.position = "none") 
   
@@ -468,12 +468,17 @@ prom_all %>%
     #theme(legend.position = "none")
 ```
 ```{r}
+promA <- expression(italic("pA")); promB <- expression(italic("pB")); promD <- expression(italic("pD"))
+tJ <- expression("T"["J"]); tF <- expression("T"["F"]); tG <- expression("T"["G"]); tH <- expression("T"["H"]);
+
 prom <- prom_all %>%
   ggplot(aes(x=fct_relevel(element, "pA", "pB", "btss49", "pD"), y=strength, fill=model)) +
     geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
     scale_y_continuous(limits = c(0, 20), expand = expansion(mult = c(0, 0))) +
     scale_fill_manual(values = c("#876B6E", "#94d7be")) +
-    ylab(expression("binding strength" ~ 
+    #scale_x_discrete(labels = c(promA, promB, "btss49", promD)) +
+    #scale_fill_manual(values = c("#72b58d", "#b5729a")) +
+    ylab(expression("Binding strength" ~ 
                          (10^{6} ~ M^{-1} ~ s^{-1})
                        )) +
     xlab("") +
@@ -485,8 +490,10 @@ term <- term_all %>%
   ggplot(aes(x=fct_relevel(element, "RUT3", "tJ", "tF", "tG", "tH"), y=strength, fill=model)) +
     geom_boxplot(position = position_dodge(preserve = "single", width = 1.1)) +
     scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) +
-    scale_fill_manual(labels = c("+ btss49, RUT3  ", "- btss49, RUT3"), values = c("#876B6E", "#94d7be")) +
-    ylab("termination efficiency (%)") +
+    #scale_fill_manual(labels = c("+ btss49, RUT3  ", "- btss49, RUT3"), values = c("#876B6E", "#dcaeb3")) +
+    scale_fill_manual(labels = c("+ btss49, RUT-3  ", "− btss49, RUT-3"), values = c("#876B6E", "#94d7be")) +
+    scale_x_discrete(labels = c("RUT-3", tJ, tF, tG, tH)) +
+    ylab("Termination efficiency (%)") +
     xlab("") +
     theme_minimal() +
     background_grid() +
@@ -510,17 +517,17 @@ legend <- get_legend(
 )
 
 cowplot::plot_grid(legend, row, ncol = 1, rel_heights = c(0.05, 1))
-ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 6.5)
+ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 7)
 ```
 
 ```{r}
 logel_model <- best_gen_report %>% 
   select(final_min_error) %>%
-  mutate(Model = "+ btss49, RUT3")
+  mutate(Model = "+ btss49, RUT-3")
 
 original_model <- best_gen_report_original_model %>%
   select(final_min_error) %>%
-  mutate(Model = "- btss49, RUT3")
+  mutate(Model = "− btss49, RUT-3")
 
 rmse <- bind_rows(logel_model, original_model)
 rmse
@@ -559,7 +566,7 @@ rnaseq <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G"
           scale_fill_manual(values = my_palette) + 
           scale_y_continuous(limits = c(0, 300), breaks = c(100, 200, 300), labels = c("4", "8", "12"), expand = c(0,0)) + 
           #breaks = c(0,3,6,9,12,15,18)) + 
-          ggtitle("Target (RNA-seq)") + 
+          ggtitle(expression("Target (RNA-seq)")) + 
           ylab("Normalized transcripts")+ 
           xlab("Genes")+ 
           cowplot::theme_cowplot(12) +
@@ -578,7 +585,7 @@ df_cryptic <- df_cryptic %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
 plot_cryptic <- logel_plot_2(df_cryptic) + 
-               ggtitle("+ BTSS49, RUT3") +
+               ggtitle(expression(+~"btss49, RUT-3")) +
                ylab("Simulated transcripts")
 
 fildir_canonical <- paste("../../../../output/", "01222023", "/", sep="")
@@ -594,7 +601,7 @@ df_canonical <- df_canonical %>%
   summarise(protein=mean(protein), transcript=mean(transcript), ribo_density=mean(ribo_density))
 
 plot_canonical <- logel_plot_2(df_canonical) + 
-               ggtitle("- BTSS49, RUT3") +
+               ggtitle(expression("−"~"btss49, RUT-3")) +
                ylab("Simulated transcripts")
 
 cowplot::plot_grid(rnaseq, plot_cryptic, plot_canonical, nrow = 1)
