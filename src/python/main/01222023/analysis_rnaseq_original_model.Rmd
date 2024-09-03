@@ -198,7 +198,8 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
-plot_reports(filedir, "Absolute transcripts")
+# plot RMSE curves for each simulation (requires raw data)
+# plot_reports(filedir, "Absolute transcripts")
 ```
 
 ```{r}

@@ -313,8 +313,8 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
-# plot RMSE curves for each trial
-plot_reports(filedir, "RNAseq")
+# plot RMSE curves for each simulation (requires raw data)
+# plot_reports(filedir, "RNAseq")
 ```
 
 ```{r}
@@ -326,11 +326,12 @@ plot_reports(filedir, "RNAseq")
 
 ```{r}
 best_gen_report <- read_csv("best_gen_report_putative_rnaseq.csv")
+best_gen_report
 ```
 
 
 ```{r}
-local_fildir <- "output/" # simulation files for plotting have been copied here
+local_fildir <- "sim_output/" # simulation files for plotting have been copied here
 logel_timeseries_with_rnaseq(local_fildir, "7", "0", "500", "3878", 500)
 #ggsave("figures/fit_to_rnaseq_timeseries_short.png", width = 9, height = 3)
 ```

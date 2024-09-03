@@ -15,13 +15,14 @@ require(kableExtra)
 ```
 
 #### Summary
-Simulated decompressed phiX174 gene expression, using promoter and terminator values estimated from fitting the model to qPCR data. 
+Simulated decompressed phiX174 gene expression, using promoter and terminator values estimated from fitting the model to RNA-seq data. 
 
 Common Functions & Base directory 
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
 date <- "06132023"
-filedir <- paste("../../../../output/", date, "/", sep="")
+#filedir <- paste("../../../../output/", date, "/", sep="")
+filedir <- "./sim_output"
 
 # get_reports() retrieves the reports for all the simulation runs in a specified scenario
 # had hardcoded case for Scenario B where there is no simulation 1
@@ -240,7 +241,7 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 gen <- 2467
 sim_data <- data.frame()
 for(i in 1:5){
-     tmp <- read_tsv(paste0(filedir, "15", "_gen_", gen, "_seed_", i, ".tsv")) %>%
+     tmp <- read_tsv(paste0(filedir, "/decomp/", "15", "_gen_", gen, "_seed_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
      sim_data <- rbind(sim_data, tmp)}
@@ -254,7 +255,8 @@ decomp
 ```
 ```{r}
 # Now get averages and plot WT simulation
-wt_path <- "../../../../output/01222023/"
+#wt_path <- "../../../../output/01222023/"
+wt_path <- "./sim_output/wt/"
 gen <- 2467
 sim_data_wt <- data.frame()
 for(i in 0:4){
@@ -308,7 +310,7 @@ comp %>% ggplot(aes(x=species, y=fold_change, fill=experiment)) +
   theme(legend.title = element_blank()) +
   geom_hline(yintercept=0)
 
-ggsave("paper_figures/decomp_proteomics_vs_sim.png", width = 6, height = 4)
+#ggsave("paper_figures/decomp_proteomics_vs_sim.png", width = 6, height = 4)
 ```
 
 

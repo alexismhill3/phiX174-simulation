@@ -232,8 +232,9 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
-plot_reports(filedir, "Absolute transcripts")
-ggsave("figures/rmse_curves.png", width = 9, height = 5)
+# plot RMSE curves for all simulations (requires raw data)
+# plot_reports(filedir, "Absolute transcripts")
+# ggsave("figures/rmse_curves.png", width = 9, height = 5)
 ```
 
 ```{r}
@@ -256,7 +257,7 @@ time_stamp <- "500"
 ```
 
 ```{r}
-local_filedir <- "output/" # simulation files for plotting have been copied here
+local_filedir <- "sim_output/" # simulation files for plotting have been copied here
 
 #write_csv(get_single_report(filedir, sim_num), "sim_18_report.csv")
 sim_18_report <- read_csv("sim_18_report.csv")
@@ -441,8 +442,3 @@ best_gen_report %>%
   filter(final_min_error <= 2.8) %>% 
   summarise(across(everything(), list(mean)))
 ```
-
-
-
-
-
