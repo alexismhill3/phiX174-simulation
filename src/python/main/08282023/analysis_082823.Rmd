@@ -271,5 +271,5 @@ wt <- logel_plot_2(sim_wt) + labs(title=label_1)
 
 ```{r}
 cowplot::plot_grid(wt, swap, swap_1, ncol = 3, nrow = 1)
-ggsave("figures/swap_pA_tH.png", width = 9, height = 3)
+#ggsave("figures/swap_pA_tH.png", width = 9, height = 3)
 ```

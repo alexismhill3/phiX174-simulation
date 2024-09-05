@@ -22,7 +22,7 @@ Common Functions & Base directory
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
 date <- "09232023"
-filedir <- paste("../../../../output/", date, "/", sep="")
+#filedir <- paste("../../../../output/", date, "/", sep="")
 
 my_palette = c('#8C4C47', '#C27F7A', '#21819F', '#65AFCF', '#93D8F8', '#398048', '#73B47E', '#97D8A2', '#A56EA9', '#C994CE', '#EDB7F2')
 
@@ -311,16 +311,25 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
+# Plot RMSE curves for all runs (requires raw data)
 plot_reports(filedir, "RNAseq")
 ```
 
 ```{r}
+# get best (lowest RMSE) estimates for all 20 runs
 best_gen_report <- best_gen(filedir)
-best_gen_report
+write.csv(best_gen_report, "best_gen_report_rnaseq_6000.csv")
+```
+
+### If raw data is not available, start here
+
+```{r}
+best_gen_report <- read.csv("best_gen_report_rnaseq_6000.csv")
+local_filedir <- "./simulation_output/"
 ```
 
 ```{r}
-logel_timeseries_with_rnaseq(filedir, "10", "0", "500", "5542", 500)
+logel_timeseries_with_rnaseq(local_filedir, "10", "0", "500", "5542", 500)
 ```
 
 ```{r}
@@ -346,7 +355,7 @@ term_palette = c('#65AFCF', '#C994CE', '#A56EA9', '#EDB7F2', '#97D8A2')
 
 promoter_dist <- best_gen_report %>% 
   filter(final_min_error <= 24) %>%
-  select(-1:-2, -12:-15) %>%
+  select(pA, pB, btss49, pD, RUT3, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("pA", "pB", "pD", "btss49")) %>%
   ggplot(aes(x=fct_relevel(element, "pD", "btss49", "pB", "pA"), y=strength, fill=element)) +
@@ -365,7 +374,7 @@ promoter_dist <- best_gen_report %>%
 
 terminator_dist <- best_gen_report %>% 
   filter(final_min_error <= 24) %>%
-  select(-1:-2, -12:-15) %>%
+  select(pA, pB, btss49, pD, RUT3, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("RUT3", "tF", "tG", "tJ", "tH")) %>%
   ggplot(aes(x=fct_relevel(element, "tH", "tG", "tF", "tJ", "RUT3"), y=strength, fill=element)) +
@@ -398,13 +407,13 @@ best_gen_report_original_model <- read_csv("../01222023/best_gen_report_rnaseq_o
 prom_new <- best_gen_report %>% 
   ungroup() %>%
   filter(final_min_error <= 24) %>%
-  select(3:6, 14) %>%
+  select(pA, pB, pD, btss49, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   mutate(model = "Logel")
   
 prom_orig <- best_gen_report_original_model %>%
   ungroup() %>%
-  select(3:5, 12) %>%
+  select(pA, pB, pD, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   mutate(model = "original")
 
@@ -429,13 +438,13 @@ prom_all %>%
 term_new <- best_gen_report %>% 
   ungroup() %>%
   filter(final_min_error <= 24) %>%
-  select(7:11, 14) %>%
+  select(RUT3, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   mutate(model = "Logel")
   
 term_orig <- best_gen_report_original_model %>%
   ungroup() %>%
-  select(6:9, 12) %>%
+  select(tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   mutate(model = "original")
 
@@ -517,7 +526,7 @@ legend <- get_legend(
 )
 
 cowplot::plot_grid(legend, row, ncol = 1, rel_heights = c(0.05, 1))
-ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 7)
+#ggsave("paper_figures/rnaseq_estimates.png", width = 8, height = 7)
 ```
 
 ```{r}
@@ -543,7 +552,7 @@ rmse %>% ggplot(aes(x = Model, y = final_min_error)) +
   background_grid() +
   panel_border(color = "gray40") +
   coord_flip()
-ggsave("paper_figures/final_rmse_plot.png", width = 8, height = 4)
+#ggsave("paper_figures/final_rmse_plot.png", width = 8, height = 4)
 ```
 ```{r}
 best_gen_report %>% 
@@ -575,7 +584,7 @@ rnaseq <- data.frame(species = c("A", "A*", "B", "K","C", "D", "E", "J","F", "G"
 
 df_cryptic <- data.frame()
 for(i in 0:4){
-     tmp <- read_tsv(paste0(filedir, "/sim_17_gen_5574_ID_", i, ".tsv")) %>%
+     tmp <- read_tsv(paste0(local_filedir, "/sim_17_gen_5574_ID_", i, ".tsv")) %>%
        mutate(time = round(time)) %>% 
        filter(time == 500)
      df_cryptic <- rbind(df_cryptic, tmp)}
@@ -588,7 +597,8 @@ plot_cryptic <- logel_plot_2(df_cryptic) +
                ggtitle(expression(+~"btss49, RUT-3")) +
                ylab("Simulated transcripts")
 
-fildir_canonical <- paste("../../../../output/", "01222023", "/", sep="")
+#fildir_canonical <- paste("../../../../output/", "01222023", "/", sep="")
+fildir_canonical <- "../12192022/sim_output/"
 df_canonical <- data.frame()
 for(i in 0:4){
      tmp <- read_tsv(paste0(fildir_canonical, "/sim_15_gen_2467_ID_", i, ".tsv")) %>%
@@ -605,15 +615,13 @@ plot_canonical <- logel_plot_2(df_canonical) +
                ylab("Simulated transcripts")
 
 cowplot::plot_grid(rnaseq, plot_cryptic, plot_canonical, nrow = 1)
-ggsave("paper_figures/fitted_sims_both_models.png", width = 9, height = 3)
+#ggsave("paper_figures/fitted_sims_both_models.png", width = 9, height = 3)
 ```
 
 ```{r}
 row <- cowplot::plot_grid(prom + theme(legend.position = "none"), term, nrow = 1, rel_widths = c(0.45, 0.65), labels = c("A", "B"))
-
 row
-#cowplot::plot_grid(row, legend, ncol = 2, rel_widths = c(1, 0.1))
-ggsave("paper_figures/rnaseq_estimates_horizontal.png", width = 9, height = 3)
+#ggsave("paper_figures/rnaseq_estimates_horizontal.png", width = 9, height = 3)
 ```
 
 

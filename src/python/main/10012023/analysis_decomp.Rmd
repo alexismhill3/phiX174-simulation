@@ -396,16 +396,23 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 ```
 
 ```{r}
+# plot RMSE curves for all trials (requires raw data)
 plot_reports(filedir, "Decompressed")
 ```
 
 ```{r}
-best_gen_report <- best_gen(filedir)
-best_gen_report
+#best_gen_report <- best_gen(filedir)
+#write.csv(best_gen_report, "best_gen_report_decomp.csv")
 ```
 
 ```{r}
-decomp_sims <- timeseries_proteomics(filedir, "13", "0", "500", "3423", 500)
+best_gen_report <- read.csv("best_gen_report_decomp.csv")
+local_filedir <- "./simulation_output/"
+```
+
+
+```{r}
+decomp_sims <- timeseries_proteomics(local_filedir, "13", "0", "500", "3423", 500)
 decomp_sims
 ```
 ```{r}
@@ -414,7 +421,7 @@ tJ <- expression("T"["J"]); tF <- expression("T"["F"]); tG <- expression("T"["G"
 
 promoter_dist_2 <- best_gen_report %>% 
   #filter(final_min_error <= 2.8) %>%
-  select(-1:-2, -10:-13) %>%
+  select(pA, pB, pD, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=fct_relevel(element, "pA", "pB", "pD"), y=strength)) +
@@ -438,7 +445,7 @@ promoter_dist_2 <- best_gen_report %>%
 
 terminator_dist_2 <- best_gen_report %>% 
   #filter(final_min_error <= 2.8) %>%
-  select(-1:-2, -10:-13) %>%
+  select(pA, pB, pD, tJ, tF, tG, tH, sim) %>%
   pivot_longer(!sim, names_to = "element", values_to = "strength") %>%
   filter(!element %in% c("pA", "pB", "pD")) %>%
   ggplot(aes(x=fct_relevel(element, "tJ", "tF", "tG", "tH"), y=strength)) +
@@ -463,7 +470,7 @@ decomp_dists <- cowplot::plot_grid(promoter_dist_2, terminator_dist_2,
                   ncol = 2, nrow = 1, align = "h")
 
 cowplot::plot_grid(decomp_dists, decomp_sims, labels = c("", "C"), nrow = 2)
-ggsave("paper_figures/decomp_S5.png", width = 9, height = 5)
+#ggsave("paper_figures/decomp_S5.png", width = 9, height = 5)
 ```
 
 

@@ -8,3 +8,5 @@
 - 09232023: Fit putative regulatory model to RNA-seq data (re-run with more generations) (fig4, Sup. fig3/4)
 - 10012023: Fit decompressed phiX174 to proteomics data (Sup. fig5)
 - archived: old/exploratory analyses not explicitly used in paper
+
+Note: Processed data and select simulations outputs needed for plotting are in each folder. To re-generate manuscript figures, run each R notebook (analysis_<>.Rmd) from the beginning. The complete set of simulation outputs is too large to host on github, but is available upon request. 
