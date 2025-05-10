@@ -179,11 +179,11 @@ logel_timeseries_with_pcr <- function(filedir, sim, gen1, gen2, gen3, timestamp)
     draw_label("Genes", hjust = 0.5, vjust = 0.5, size = 11) +
     theme(plot.margin = margin(0,0,12,0, "pt"))
   
-  sim_start <- logel_plot(filedir, sim, gen1, title = paste("Generation", gen1), timestamp = timestamp, label = gen1) +
+  sim_start <- logel_plot(filedir, sim, gen1, title = paste("Iteration", gen1), timestamp = timestamp, label = gen1) +
                xlab("") +
                theme(plot.margin = margin(7,7,0,7, "pt"))
   
-  sim_middle <- logel_plot(filedir, sim, gen2, title = paste("Generation", gen2), timestamp = timestamp, label = gen2) +
+  sim_middle <- logel_plot(filedir, sim, gen2, title = paste("Iteration", gen2), timestamp = timestamp, label = gen2) +
                 scale_y_continuous(limits = c(0, 300), breaks = c(100, 200), expand = c(0,0), labels = NULL) +
                 theme(axis.ticks.y = element_blank(),
                       axis.title.y = element_blank()) +
@@ -266,7 +266,14 @@ sim_18_timeseries <- logel_timeseries_with_pcr(local_filedir, sim_num, "0", "415
 
 cowplot::plot_grid(sim_18_timeseries, sim_18_rmse, ncol = 1, rel_heights = c(0.35, 0.35), labels = c("A", "B"))
 #ggsave("paper_figures/timeseries_sim_18_short.png", width = 9, height = 4.5)
+#ggsave("paper_figures/Fig2.tiff", width = 9, height = 4.5, device='tiff', dpi=300)
 ```
+```{r}
+sim_18_timeseries
+ggsave("thesis_figures/figure_2_barplots.png",  width = 9, height = 2.5)
+```
+
+
 ```{r}
 # pA/tH correlation for all data
 best_gen_report %>% mutate(tH_mut = 1 - tH) %>%

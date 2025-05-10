@@ -22,7 +22,7 @@ Common Functions & Base directory
 ```{r, echo = FALSE, message = FALSE, warning=FALSE}
 # Functions & Variables I use a lot
 date <- "09232023"
-#filedir <- paste("../../../../output/", date, "/", sep="")
+filedir <- paste("../../../../output/", date, "/", sep="")
 
 my_palette = c('#8C4C47', '#C27F7A', '#21819F', '#65AFCF', '#93D8F8', '#398048', '#73B47E', '#97D8A2', '#A56EA9', '#C994CE', '#EDB7F2')
 
@@ -312,13 +312,13 @@ transcripts_vs_time_plot <- function(filedir, sim, gen){
 
 ```{r}
 # Plot RMSE curves for all runs (requires raw data)
-plot_reports(filedir, "RNAseq")
+# plot_reports(filedir, "RNAseq")
 ```
 
 ```{r}
 # get best (lowest RMSE) estimates for all 20 runs
-best_gen_report <- best_gen(filedir)
-write.csv(best_gen_report, "best_gen_report_rnaseq_6000.csv")
+# best_gen_report <- best_gen(filedir)
+# write.csv(best_gen_report, "best_gen_report_rnaseq_6000.csv")
 ```
 
 ### If raw data is not available, start here
@@ -622,6 +622,78 @@ cowplot::plot_grid(rnaseq, plot_cryptic, plot_canonical, nrow = 1)
 row <- cowplot::plot_grid(prom + theme(legend.position = "none"), term, nrow = 1, rel_widths = c(0.45, 0.65), labels = c("A", "B"))
 row
 #ggsave("paper_figures/rnaseq_estimates_horizontal.png", width = 9, height = 3)
+```
+### Alternate version of boxplots w/ individual oberservations
+
+```{r}
+promA <- expression(italic("pA")); promB <- expression(italic("pB")); promD <- expression(italic("pD"))
+tJ <- expression("T"["J"]); tF <- expression("T"["F"]); tG <- expression("T"["G"]); tH <- expression("T"["H"]);
+
+prom <- prom_all %>%
+  ggplot(aes(x=fct_relevel(element, "pA", "pB", "btss49", "pD"), y=strength, color=model, fill=model)) +
+    geom_boxplot(position = position_dodge(), alpha=0.2, outliers = FALSE) +
+    geom_point(position=position_jitterdodge(), alpha=0.8, size=0.7) +
+    scale_y_continuous(limits = c(0, 20), expand = expansion(mult = c(0, 0))) +
+    scale_color_manual(values = c("#705b58", "#0071b2")) +
+    #scale_x_discrete(labels = c(promA, promB, "btss49", promD)) +
+    #scale_fill_manual(values = c("#72b58d", "#b5729a")) +
+    ylab(expression("Binding strength" ~ 
+                         (10^{6} ~ M^{-1} ~ s^{-1})
+                       )) +
+    xlab("") +
+    theme_bw() +
+    #background_grid() +
+    #panel_border(color = "gray40") +
+    ggtitle("Promoters")
+
+term <- term_all %>%
+  ggplot(aes(x=fct_relevel(element, "RUT3", "tJ", "tF", "tG", "tH"), y=strength, color=model, fill=model)) +
+    geom_boxplot(position = position_dodge(), alpha=0.2, outliers = FALSE) +
+    geom_point(position=position_jitterdodge(), alpha=0.8, size=0.7) +
+    scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0))) +
+    #scale_fill_manual(labels = c("+ btss49, RUT3  ", "- btss49, RUT3"), values = c("#876B6E", "#dcaeb3")) +
+    scale_fill_discrete(guide = "none") +
+    #scale_color_manual(labels = c("w/ cryptic", "canonical"), values = c("#876B6E", "#58bf9f"), name="Model") +
+    scale_color_manual(labels = c("w/ cryptic", "canonical"), values = c("#705b58", "#0071b2"), name="Model") +
+    scale_x_discrete(labels = c("RUT-3", tJ, tF, tG, tH)) +
+    ylab("Termination efficiency (%)") +
+    xlab("") +
+    theme_bw() +
+    #background_grid() +
+    #panel_border(color = "gray40") +
+    ggtitle("Terminators")
+
+legend <- get_legend(term)
+
+cowplot::plot_grid(prom + theme(legend.position = "none"), term + theme(legend.position = "none"), legend, ncol = 3, rel_widths = c(1, 1, 0.4))
+ggsave("thesis_figures/prom_term_estimates_rnaseq.png", width = 8, height = 4)
+```
+```{r}
+logel_model <- best_gen_report %>% 
+  select(final_min_error) %>%
+  mutate(Model = "w/ cryptic")
+
+original_model <- best_gen_report_original_model %>%
+  select(final_min_error) %>%
+  mutate(Model = "canonical")
+
+rmse <- bind_rows(logel_model, original_model)
+rmse
+
+t.test(final_min_error ~ Model, data = rmse)
+
+rmse %>% ggplot(aes(x = Model, y = final_min_error)) +
+  geom_boxplot(fill = "gray70", outliers = FALSE) +
+  geom_point(position=position_jitter(), alpha=0.8, size=0.7) +
+  scale_y_continuous(limits = c(0, 45),
+                     expand = expansion(mult = c(0, 0)),
+                     name = "Final RMSE") +
+  theme_minimal() +
+  background_grid() +
+  panel_border(color = "gray40") +
+  coord_flip()
+
+ggsave("thesis_figures/rmse.png", width = 7, height = 4)
 ```
 
 
